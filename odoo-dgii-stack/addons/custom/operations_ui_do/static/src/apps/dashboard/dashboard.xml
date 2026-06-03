@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="operations_ui_do.Dashboard">
+        <div class="ops-dashboard">
+
+            <!-- Hero header -->
+            <header class="ops-dashboard__hero">
+                <div class="ops-dashboard__hero-text">
+                    <div class="ops-dashboard__date" t-esc="state.today"/>
+                    <h1 class="ops-dashboard__title">Hub Operativo</h1>
+                    <p class="ops-dashboard__subtitle">
+                        Vista en tiempo real de tu operacion: ventas, facturacion e inventario.
+                    </p>
+                </div>
+                <div class="ops-dashboard__hero-deco">
+                    <i class="fa fa-bolt"/>
+                </div>
+            </header>
+
+            <!-- Loading state -->
+            <div class="ops-dashboard__loading" t-if="state.loading">
+                <div class="ops-spinner"/>
+                <span>Cargando metricas en vivo...</span>
+            </div>
+
+            <!-- Metricas -->
+            <section class="ops-dashboard__section" t-if="!state.loading">
+                <h2 class="ops-dashboard__section-title">
+                    <i class="fa fa-line-chart"/>
+                    Metricas clave
+                </h2>
+                <div class="ops-dashboard__grid ops-dashboard__grid--metrics">
+                    <MetricCard
+                        label="'Ventas hoy'"
+                        value="state.sales.today"
+                        currency="'DOP'"
+                        icon="'shopping-cart'"
+                        tone="'primary'"
+                        onClick.bind="openSalesList"
+                        t-if="state.modules.sale"/>
+
+                    <MetricCard
+                        label="'Ventas del mes'"
+                        value="state.sales.monthAmount"
+                        currency="'DOP'"
+                        icon="'trophy'"
+                        tone="'success'"
+                        trend="state.sales.trend"
+                        onClick.bind="openSalesList"
+                        t-if="state.modules.sale"/>
+
+                    <MetricCard
+                        label="'Ordenes del mes'"
+                        value="state.sales.monthCount"
+                        icon="'file-text-o'"
+                        tone="'info'"
+                        onClick.bind="openSalesList"
+                        t-if="state.modules.sale"/>
+
+                    <MetricCard
+                        label="'Por cobrar'"
+                        value="state.invoices.pendingAmount"
+                        currency="'DOP'"
+                        icon="'money'"
+                        tone="'warning'"
+                        onClick.bind="openInvoices"
+                        t-if="state.modules.account"/>
+
+                    <MetricCard
+                        label="'Facturas pendientes'"
+                        value="state.invoices.pendingCount"
+                        icon="'inbox'"
+                        tone="'warning'"
+                        onClick.bind="openInvoices"
+                        t-if="state.modules.account"/>
+
+                    <MetricCard
+                        label="'Movimientos hoy'"
+                        value="state.inventory.pickingsToday"
+                        icon="'truck'"
+                        tone="'info'"
+                        onClick.bind="openInventory"
+                        t-if="state.modules.stock"/>
+
+                    <MetricCard
+                        label="'Clientes nuevos (mes)'"
+                        value="state.partners.newThisMonth"
+                        icon="'user-plus'"
+                        tone="'primary'"
+                        onClick.bind="openCustomers"/>
+                </div>
+            </section>
+
+            <!-- Acciones rapidas -->
+            <section class="ops-dashboard__section" t-if="!state.loading">
+                <h2 class="ops-dashboard__section-title">
+                    <i class="fa fa-bolt"/>
+                    Acciones rapidas
+                </h2>
+                <div class="ops-dashboard__grid ops-dashboard__grid--actions">
+                    <QuickAction
+                        title="'Nueva venta'"
+                        description="'Crea una orden de venta en pocos clics'"
+                        icon="'plus-circle'"
+                        tone="'accent'"
+                        onClick.bind="openQuickSale"
+                        t-if="state.modules.sale"/>
+
+                    <QuickAction
+                        title="'Facturas'"
+                        description="'Revisa y emite facturas a clientes'"
+                        icon="'file-text'"
+                        tone="'primary'"
+                        onClick.bind="openInvoices"
+                        t-if="state.modules.account"/>
+
+                    <QuickAction
+                        title="'Inventario'"
+                        description="'Movimientos, recepciones y entregas'"
+                        icon="'cubes'"
+                        tone="'primary'"
+                        onClick.bind="openInventory"
+                        t-if="state.modules.stock"/>
+
+                    <QuickAction
+                        title="'Escanear QR'"
+                        description="'Registra productos en operaciones reales de inventario'"
+                        icon="'qrcode'"
+                        tone="'accent'"
+                        onClick.bind="openInventoryScan"
+                        t-if="state.modules.stock"/>
+
+                    <QuickAction
+                        title="'Clientes'"
+                        description="'Gestiona la base de contactos'"
+                        icon="'users'"
+                        tone="'neutral'"
+                        onClick.bind="openCustomers"/>
+
+                    <QuickAction
+                        title="'Productos'"
+                        description="'Catalogo, precios y existencias'"
+                        icon="'tags'"
+                        tone="'neutral'"
+                        onClick.bind="openProducts"/>
+                </div>
+            </section>
+
+        </div>
+    </t>
+
+</templates>

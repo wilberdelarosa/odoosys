@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Accion cliente para el dashboard operativo -->
+    <record id="action_operations_dashboard" model="ir.actions.client">
+        <field name="name">Hub Operativo</field>
+        <field name="tag">operations_ui_do.dashboard</field>
+        <field name="target">main</field>
+    </record>
+
+    <record id="action_operations_inventory_scan" model="ir.actions.client">
+        <field name="name">Escaner de Inventario</field>
+        <field name="tag">operations_ui_do.inventory_scan</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- Menu raiz: app independiente -->
+    <menuitem
+        id="menu_operations_root"
+        name="Operaciones"
+        sequence="3"/>
+
+    <menuitem
+        id="menu_operations_dashboard"
+        name="Hub Operativo"
+        parent="menu_operations_root"
+        action="action_operations_dashboard"
+        sequence="1"/>
+
+    <menuitem
+        id="menu_operations_inventory_scan"
+        name="Escaner de Inventario"
+        parent="menu_operations_root"
+        action="action_operations_inventory_scan"
+        sequence="2"/>
+
+</odoo>

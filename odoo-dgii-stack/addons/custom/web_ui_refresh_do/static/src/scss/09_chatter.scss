@@ -1,0 +1,122 @@
+// =============================================================================
+//  09_chatter.scss
+//  Chatter (panel de mensajes/actividades a la derecha del form view).
+// =============================================================================
+
+.o_web_client {
+
+    .o-mail-Chatter,
+    .o_Chatter,
+    .o_chatter {
+        background: var(--od-bg-app);
+        border-left: 1px solid var(--od-border-soft);
+        padding: var(--od-space-4);
+
+        // Top bar del chatter (acciones: enviar mensaje, log nota, actividad)
+        .o-mail-Chatter-topbar,
+        .o_ChatterTopbar {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-border-soft);
+            border-radius: var(--od-radius-md);
+            padding: var(--od-space-2) var(--od-space-3);
+            margin-bottom: var(--od-space-3);
+            gap: var(--od-space-2);
+
+            .btn {
+                font-size: var(--od-font-size-sm);
+                padding: 6px 12px;
+                min-height: 32px;
+            }
+        }
+
+        // Cards de mensajes individuales
+        .o-mail-Message,
+        .o_Message {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-border-soft);
+            border-radius: var(--od-radius-md);
+            padding: var(--od-space-3) var(--od-space-4);
+            margin-bottom: var(--od-space-3);
+            box-shadow: var(--od-shadow-xs);
+
+            .o-mail-Message-author,
+            strong {
+                color: var(--od-text-strong);
+                font-weight: var(--od-font-weight-semibold);
+                font-size: var(--od-font-size-sm);
+            }
+
+            .o-mail-Message-date,
+            .text-muted {
+                color: var(--od-text-subtle);
+                font-size: var(--od-font-size-xs);
+            }
+
+            .o-mail-Message-body {
+                color: var(--od-text-main);
+                font-size: var(--od-font-size-base);
+                line-height: var(--od-line-height-base);
+                margin-top: var(--od-space-2);
+            }
+
+            // Avatar redondo elegante
+            .o-mail-Message-avatar,
+            img.o_avatar {
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                object-fit: cover;
+                border: 2px solid var(--od-bg-surface);
+                box-shadow: var(--od-shadow-xs);
+            }
+        }
+
+        // Editor de respuesta (composer)
+        .o-mail-Composer,
+        .o_Composer {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-border-medium);
+            border-radius: var(--od-radius-md);
+            padding: var(--od-space-3);
+            transition: border var(--od-duration-fast) var(--od-ease);
+
+            &:focus-within {
+                border-color: var(--od-border-focus);
+                box-shadow: var(--od-shadow-focus);
+            }
+
+            textarea, [contenteditable] {
+                background: transparent;
+                border: none;
+                font-size: var(--od-font-size-base);
+                color: var(--od-text-strong);
+
+                &:focus {
+                    outline: none;
+                    box-shadow: none;
+                }
+            }
+        }
+
+        // Activities (actividades pendientes)
+        .o-mail-ActivityList .o-mail-Activity,
+        .o_Activity {
+            background: var(--od-color-warning-soft);
+            border: 1px solid rgba(208, 135, 0, 0.20);
+            border-radius: var(--od-radius-md);
+            padding: var(--od-space-3) var(--od-space-4);
+            margin-bottom: var(--od-space-3);
+        }
+
+        // Followers section
+        .o-mail-Followers,
+        .o_FollowerListMenu {
+            font-size: var(--od-font-size-sm);
+
+            .o-mail-Follower-name {
+                color: var(--od-text-main);
+                font-weight: var(--od-font-weight-medium);
+            }
+        }
+    }
+}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="operations_ui_do.MetricCard">
+        <div class="ops-metric-card"
+             t-att-class="`tone-${props.tone}` + (props.onClick ? ' is-clickable' : '')"
+             t-on-click="onCardClick">
+            <div class="ops-metric-card__head">
+                <div class="ops-metric-card__icon">
+                    <i class="fa" t-att-class="`fa-${props.icon}`"/>
+                </div>
+                <div class="ops-metric-card__label" t-esc="props.label"/>
+            </div>
+
+            <div class="ops-metric-card__value od-metric" t-esc="formattedValue"/>
+
+            <div class="ops-metric-card__trend" t-att-class="trendClass" t-if="props.trend !== undefined and props.trend !== null and props.trend !== 0">
+                <i class="fa" t-att-class="trendIcon"/>
+                <span t-esc="Math.abs(props.trend).toFixed(1) + '%'"/>
+                <span class="ops-metric-card__trend-note">vs mes anterior</span>
+            </div>
+        </div>
+    </t>
+
+</templates>

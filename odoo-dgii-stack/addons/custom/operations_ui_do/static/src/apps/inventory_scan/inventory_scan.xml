@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="operations_ui_do.InventoryScan">
+        <div class="ops-inventory-scan">
+            <header class="ops-inventory-scan__hero">
+                <div>
+                    <div class="ops-inventory-scan__eyebrow">Inventario conectado</div>
+                    <h1>Escaner QR / Barcode</h1>
+                    <p>Registra cantidades sobre operaciones reales de inventario, usando productos existentes por barcode o referencia interna.</p>
+                </div>
+                <button class="btn btn-secondary" t-on-click="openPicking" t-att-disabled="!state.selectedPickingId">
+                    <i class="fa fa-external-link"/>
+                    Abrir operacion
+                </button>
+            </header>
+
+            <div class="ops-inventory-scan__loading" t-if="state.loading">
+                <div class="ops-spinner"/>
+                <span>Cargando operaciones disponibles...</span>
+            </div>
+
+            <div class="ops-inventory-scan__layout" t-if="!state.loading">
+                <section class="ops-inventory-scan__panel ops-inventory-scan__panel--camera">
+                    <div class="ops-inventory-scan__panel-head">
+                        <div>
+                            <h2>Camara</h2>
+                            <p>QR, Code 128, Code 39, EAN y UPC</p>
+                        </div>
+                        <span class="od-pill od-pill-success" t-if="state.cameraActive">Activo</span>
+                        <span class="od-pill" t-if="!state.cameraActive">Manual listo</span>
+                    </div>
+
+                    <div class="ops-inventory-scan__camera">
+                        <video t-ref="video" playsinline="true" muted="true"/>
+                        <div class="ops-inventory-scan__camera-empty" t-if="!state.cameraActive">
+                            <i class="fa fa-qrcode"/>
+                            <span>Activa la camara o usa entrada manual</span>
+                        </div>
+                    </div>
+
+                    <div class="ops-inventory-scan__camera-actions">
+                        <button class="btn btn-primary" t-on-click="startScanner" t-if="!state.cameraActive">
+                            <i class="fa fa-camera"/>
+                            Activar camara
+                        </button>
+                        <button class="btn btn-secondary" t-on-click="stopScanner" t-if="state.cameraActive">
+                            <i class="fa fa-stop"/>
+                            Detener
+                        </button>
+                    </div>
+                </section>
+
+                <section class="ops-inventory-scan__panel">
+                    <div class="ops-inventory-scan__panel-head">
+                        <div>
+                            <h2>Registro</h2>
+                            <p>Selecciona una operacion pendiente y registra unidades</p>
+                        </div>
+                    </div>
+
+                    <div class="ops-inventory-scan__field">
+                        <label>Operacion de inventario</label>
+                        <select class="form-select" t-on-change="onPickingChange" t-att-value="state.selectedPickingId || ''">
+                            <option value="" t-if="!state.pickings.length">No hay operaciones pendientes</option>
+                            <option t-foreach="state.pickings" t-as="picking" t-key="picking.id" t-att-value="picking.id">
+                                <t t-esc="picking.name"/> · <t t-esc="getRelName(picking.picking_type_id)"/> · <t t-esc="getRelName(picking.partner_id, 'Sin contacto')"/>
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="ops-inventory-scan__field-grid">
+                        <div class="ops-inventory-scan__field">
+                            <label>Codigo escaneado</label>
+                            <input class="form-control od-font-mono" t-att-value="state.scanCode" t-on-input="onScanCodeInput" placeholder="Barcode, QR o referencia interna"/>
+                        </div>
+                        <div class="ops-inventory-scan__field ops-inventory-scan__qty">
+                            <label>Cantidad</label>
+                            <input class="form-control" type="number" min="0.01" step="0.01" t-att-value="state.qty" t-on-input="onQtyInput"/>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary ops-inventory-scan__submit" t-on-click="applyManualScan" t-att-disabled="state.applying || !state.selectedPickingId">
+                        <i class="fa fa-check-circle"/>
+                        Registrar escaneo
+                    </button>
+
+                    <div class="ops-inventory-scan__result" t-if="state.lastResult">
+                        <div class="od-pill od-pill-success">Registrado</div>
+                        <strong t-esc="state.lastResult.product_name"/>
+                        <span><t t-esc="state.lastResult.quantity"/> <t t-esc="state.lastResult.uom_name"/></span>
+                    </div>
+                </section>
+
+                <section class="ops-inventory-scan__panel ops-inventory-scan__panel--search">
+                    <div class="ops-inventory-scan__panel-head">
+                        <div>
+                            <h2>Buscar producto</h2>
+                            <p>Nombre, referencia interna o barcode</p>
+                        </div>
+                    </div>
+
+                    <div class="ops-inventory-scan__field">
+                        <label>Producto</label>
+                        <input class="form-control" t-att-value="state.productQuery" t-on-input="onProductSearchInput" placeholder="Ej. gas refrigerante, R410A, SKU..."/>
+                    </div>
+
+                    <div class="ops-inventory-scan__products" t-if="state.products.length">
+                        <button class="ops-inventory-scan__product" t-foreach="state.products" t-as="product" t-key="product.id" t-on-click="() => useProductCode(product)">
+                            <div>
+                                <strong t-esc="product.display_name"/>
+                                <span><t t-esc="product.default_code || 'Sin referencia'"/> · <t t-esc="product.barcode || 'Sin barcode'"/></span>
+                            </div>
+                            <span class="od-pill"><t t-esc="product.qty_available"/> <t t-esc="getRelName(product.uom_id)"/></span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </t>
+
+</templates>

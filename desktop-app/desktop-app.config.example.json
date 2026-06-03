@@ -1,0 +1,5 @@
+{
+  "mode": "remote",
+  "odooUrl": "https://erp.tudominio.com/web/login",
+  "gatewayHealthUrl": "https://dgii.tudominio.com/health"
+}

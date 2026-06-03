@@ -1,0 +1,160 @@
+// =============================================================================
+//  06_lists.scss
+//  Vistas de lista (tablas) - densas pero respirables, alineacion fiscal correcta.
+// =============================================================================
+
+.o_web_client {
+
+    .o_list_view {
+        background: var(--od-bg-surface);
+        border: 1px solid var(--od-border-soft);
+        border-radius: var(--od-radius-lg);
+        margin: var(--od-space-4) var(--od-space-6);
+        overflow: hidden;
+        box-shadow: var(--od-shadow-sm);
+
+        .o_list_table {
+            font-size: var(--od-font-size-base);
+            border-collapse: separate;
+            border-spacing: 0;
+
+            // Encabezado fijo
+            thead {
+                background: var(--od-bg-surface-2);
+                position: sticky;
+                top: 0;
+                z-index: 2;
+
+                th {
+                    font-weight: var(--od-font-weight-semibold);
+                    font-size: var(--od-font-size-xs);
+                    text-transform: uppercase;
+                    letter-spacing: var(--od-tracking-caps);
+                    color: var(--od-text-muted);
+                    background: var(--od-bg-surface-2);
+                    border-bottom: 1px solid var(--od-border-soft);
+                    padding: var(--od-space-3) var(--od-space-4);
+                    white-space: nowrap;
+
+                    &.o_list_number {
+                        text-align: right;
+                    }
+                }
+            }
+
+            tbody tr {
+                background: var(--od-bg-surface);
+                transition: background var(--od-duration-fast) var(--od-ease);
+
+                td {
+                    padding: var(--od-space-3) var(--od-space-4);
+                    border-bottom: 1px solid var(--od-border-soft);
+                    color: var(--od-text-main);
+                    vertical-align: middle;
+
+                    &.o_list_number {
+                        text-align: right;
+                        font-feature-settings: "tnum";
+                        font-variant-numeric: tabular-nums;
+                        font-weight: var(--od-font-weight-medium);
+                        color: var(--od-text-strong);
+                    }
+                }
+
+                &:hover {
+                    background: var(--od-color-primary-tint);
+                    cursor: pointer;
+                }
+
+                &.o_data_row_selected,
+                &.table-info {
+                    background: var(--od-color-primary-soft) !important;
+
+                    td {
+                        color: var(--od-text-strong);
+                    }
+                }
+
+                // Fila clickeada (boton seleccion)
+                .o_list_record_selector input[type="checkbox"] {
+                    accent-color: var(--od-color-primary);
+                    width: 16px;
+                    height: 16px;
+                    border-radius: var(--od-radius-xs);
+                }
+            }
+
+            // Footer con totales (suma de cantidades, total de monto)
+            tfoot {
+                background: var(--od-bg-surface-2);
+                font-weight: var(--od-font-weight-bold);
+
+                td {
+                    border-top: 2px solid var(--od-border-medium);
+                    border-bottom: none;
+                    padding: var(--od-space-3) var(--od-space-4);
+                    color: var(--od-text-strong);
+                    font-feature-settings: "tnum";
+                }
+            }
+        }
+
+        // Empty state
+        .o_view_nocontent {
+            padding: var(--od-space-12) var(--od-space-6);
+            text-align: center;
+
+            .o_view_nocontent_smiling_face,
+            .o_nocontent_help {
+                color: var(--od-text-muted);
+                font-size: var(--od-font-size-md);
+                line-height: var(--od-line-height-loose);
+
+                p {
+                    margin-bottom: var(--od-space-3);
+                }
+
+                strong {
+                    color: var(--od-text-strong);
+                    font-weight: var(--od-font-weight-bold);
+                }
+            }
+        }
+    }
+
+    // Badges en celdas de estado (Borrador/Confirmado/Cancelado)
+    .o_list_view .o_field_badge,
+    .o_list_view .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: var(--od-radius-pill);
+        font-size: var(--od-font-size-xs);
+        font-weight: var(--od-font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: var(--od-tracking-wide);
+        background: var(--od-bg-muted);
+        color: var(--od-text-muted);
+
+        &.bg-success,
+        &[data-color="10"], &[data-color="20"] {
+            background: var(--od-color-success-soft) !important;
+            color: var(--od-color-success) !important;
+        }
+        &.bg-warning,
+        &[data-color="3"], &[data-color="2"] {
+            background: var(--od-color-warning-soft) !important;
+            color: var(--od-color-warning) !important;
+        }
+        &.bg-danger,
+        &[data-color="1"] {
+            background: var(--od-color-danger-soft) !important;
+            color: var(--od-color-danger) !important;
+        }
+        &.bg-info,
+        &[data-color="4"], &[data-color="6"] {
+            background: var(--od-color-info-soft) !important;
+            color: var(--od-color-info) !important;
+        }
+    }
+}

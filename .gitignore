@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.p12
+*.pem
+*.key
+*.crt
+
+# Python / Odoo caches
+__pycache__/
+*.pyc
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Nested git metadata
+**/.git/
+
+# Runtime artifacts
+windows-native/
+ecf-endpoints-service/storage/*
+!ecf-endpoints-service/storage/.gitkeep
+!ecf-endpoints-service/storage/incoming/
+!ecf-endpoints-service/storage/incoming/.gitkeep
+!ecf-endpoints-service/storage/outgoing/
+!ecf-endpoints-service/storage/outgoing/.gitkeep
+
+# Docker local volumes or overrides
+docker-compose.override.yml

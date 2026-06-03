@@ -1,0 +1,85 @@
+// =============================================================================
+//  10_apps_menu.scss
+//  Menu de aplicaciones (Home Menu) - look premium tipo "launcher".
+// =============================================================================
+
+.o_web_client {
+
+    .o_home_menu,
+    .o_apps_container {
+        background: linear-gradient(135deg, var(--od-bg-app) 0%, var(--od-color-primary-tint) 100%);
+        min-height: 100vh;
+        padding: var(--od-space-12) var(--od-space-8);
+
+        .o_home_menu_search,
+        .o_app_search {
+            max-width: 560px;
+            margin: 0 auto var(--od-space-10);
+
+            input {
+                background: var(--od-bg-surface);
+                border: 1px solid var(--od-border-soft);
+                border-radius: var(--od-radius-pill);
+                padding: 14px 24px;
+                font-size: var(--od-font-size-md);
+                box-shadow: var(--od-shadow-md);
+                transition: all var(--od-duration-base) var(--od-ease);
+
+                &:focus {
+                    border-color: var(--od-color-primary);
+                    box-shadow: var(--od-shadow-lg), var(--od-shadow-focus);
+                    outline: none;
+                }
+            }
+        }
+
+        // Grid de apps
+        .o_apps {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: var(--od-space-5);
+            max-width: 1200px;
+            margin: 0 auto;
+
+            .o_app,
+            .o_draggable {
+                background: var(--od-bg-surface);
+                border: 1px solid var(--od-border-soft);
+                border-radius: var(--od-radius-xl);
+                padding: var(--od-space-6);
+                box-shadow: var(--od-shadow-sm);
+                transition:
+                    transform var(--od-duration-base) var(--od-ease),
+                    box-shadow var(--od-duration-base) var(--od-ease),
+                    border-color var(--od-duration-base) var(--od-ease);
+                text-align: center;
+                text-decoration: none;
+                color: inherit;
+
+                &:hover {
+                    transform: translateY(-4px);
+                    box-shadow: var(--od-shadow-xl);
+                    border-color: var(--od-color-primary);
+                }
+
+                .o_app_icon,
+                img,
+                .o_caption_icon {
+                    width: 56px;
+                    height: 56px;
+                    border-radius: var(--od-radius-lg);
+                    margin: 0 auto var(--od-space-3);
+                    object-fit: cover;
+                }
+
+                .o_caption {
+                    color: var(--od-text-strong);
+                    font-weight: var(--od-font-weight-bold);
+                    font-size: var(--od-font-size-md);
+                    margin: 0;
+                    letter-spacing: var(--od-tracking-tight);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,234 @@
+.ops-inventory-scan {
+    background: var(--od-bg-app);
+    min-height: 100%;
+    padding: var(--od-space-8);
+    font-family: var(--od-font-sans);
+
+    .ops-inventory-scan__hero {
+        background: linear-gradient(135deg, var(--od-color-primary-strong) 0%, var(--od-color-primary) 100%);
+        color: var(--od-text-on-primary);
+        border-radius: var(--od-radius-2xl);
+        padding: var(--od-space-8);
+        margin-bottom: var(--od-space-6);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--od-space-6);
+        box-shadow: var(--od-shadow-lg);
+
+        h1 {
+            color: var(--od-text-on-primary);
+            margin: 0 0 var(--od-space-2);
+            font-size: var(--od-font-size-3xl);
+            font-weight: var(--od-font-weight-black);
+        }
+
+        p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.82);
+            max-width: 720px;
+        }
+    }
+
+    .ops-inventory-scan__eyebrow {
+        color: var(--od-color-accent);
+        font-size: var(--od-font-size-xs);
+        font-weight: var(--od-font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: var(--od-tracking-caps);
+        margin-bottom: var(--od-space-2);
+    }
+
+    .ops-inventory-scan__loading,
+    .ops-inventory-scan__panel {
+        background: var(--od-bg-surface);
+        border: 1px solid var(--od-border-soft);
+        border-radius: var(--od-radius-lg);
+        box-shadow: var(--od-shadow-sm);
+    }
+
+    .ops-inventory-scan__loading {
+        padding: var(--od-space-8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--od-space-3);
+        color: var(--od-text-muted);
+    }
+
+    .ops-inventory-scan__layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 1.15fr) minmax(320px, 1fr);
+        gap: var(--od-space-5);
+        align-items: start;
+    }
+
+    .ops-inventory-scan__panel {
+        padding: var(--od-space-5);
+    }
+
+    .ops-inventory-scan__panel--search {
+        grid-column: 1 / -1;
+    }
+
+    .ops-inventory-scan__panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--od-space-3);
+        margin-bottom: var(--od-space-4);
+
+        h2 {
+            font-size: var(--od-font-size-lg);
+            font-weight: var(--od-font-weight-bold);
+            color: var(--od-text-strong);
+            margin: 0 0 2px;
+        }
+
+        p {
+            margin: 0;
+            color: var(--od-text-muted);
+            font-size: var(--od-font-size-sm);
+        }
+    }
+
+    .ops-inventory-scan__camera {
+        position: relative;
+        aspect-ratio: 16 / 10;
+        background: #07191d;
+        border-radius: var(--od-radius-lg);
+        overflow: hidden;
+        border: 1px solid var(--od-border-soft);
+        display: grid;
+        place-items: center;
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 15%;
+            border: 2px solid rgba(242, 169, 59, 0.82);
+            border-radius: var(--od-radius-md);
+            box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.20);
+            pointer-events: none;
+        }
+    }
+
+    .ops-inventory-scan__camera-empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--od-space-3);
+        color: rgba(255, 255, 255, 0.72);
+        font-weight: var(--od-font-weight-semibold);
+
+        i {
+            font-size: 44px;
+            color: var(--od-color-accent);
+        }
+    }
+
+    .ops-inventory-scan__camera-actions {
+        margin-top: var(--od-space-4);
+        display: flex;
+        gap: var(--od-space-2);
+    }
+
+    .ops-inventory-scan__field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--od-space-1);
+        margin-bottom: var(--od-space-4);
+
+        label {
+            color: var(--od-text-muted);
+            font-size: var(--od-font-size-xs);
+            font-weight: var(--od-font-weight-bold);
+            text-transform: uppercase;
+            letter-spacing: var(--od-tracking-caps);
+        }
+    }
+
+    .ops-inventory-scan__field-grid {
+        display: grid;
+        grid-template-columns: 1fr 120px;
+        gap: var(--od-space-3);
+    }
+
+    .ops-inventory-scan__submit {
+        width: 100%;
+    }
+
+    .ops-inventory-scan__result {
+        margin-top: var(--od-space-4);
+        border-radius: var(--od-radius-md);
+        background: var(--od-color-success-soft);
+        color: var(--od-color-success);
+        padding: var(--od-space-3) var(--od-space-4);
+        display: flex;
+        align-items: center;
+        gap: var(--od-space-3);
+        flex-wrap: wrap;
+    }
+
+    .ops-inventory-scan__products {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: var(--od-space-3);
+    }
+
+    .ops-inventory-scan__product {
+        background: var(--od-bg-surface);
+        border: 1px solid var(--od-border-soft);
+        border-radius: var(--od-radius-md);
+        padding: var(--od-space-4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--od-space-3);
+        text-align: left;
+        transition: all var(--od-duration-fast) var(--od-ease);
+
+        &:hover {
+            border-color: var(--od-color-primary);
+            background: var(--od-color-primary-tint);
+            box-shadow: var(--od-shadow-sm);
+        }
+
+        strong {
+            color: var(--od-text-strong);
+            font-weight: var(--od-font-weight-bold);
+            display: block;
+        }
+
+        span {
+            color: var(--od-text-muted);
+            font-size: var(--od-font-size-sm);
+        }
+    }
+}
+
+@media (max-width: 900px) {
+    .ops-inventory-scan {
+        padding: var(--od-space-4);
+
+        .ops-inventory-scan__hero {
+            flex-direction: column;
+            align-items: flex-start;
+            border-radius: var(--od-radius-lg);
+        }
+
+        .ops-inventory-scan__layout,
+        .ops-inventory-scan__field-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}

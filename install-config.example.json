@@ -1,0 +1,20 @@
+{
+  "databaseName": "dgii_cliente",
+  "adminLogin": "admin@cliente.local",
+  "adminPassword": "admin123",
+  "companyName": "Mi Empresa SRL",
+  "companyVat": "101010101",
+  "companyStreet": "Calle Principal #1",
+  "companyCity": "Santo Domingo",
+  "gatewayPort": 3000,
+  "gatewayPublicBaseUrl": "http://localhost:3000",
+  "gatewaySoftwareName": "Mi ECF Service",
+  "gatewaySoftwareVersion": "1.0.0",
+  "gatewayBuyerRnc": "101010101",
+  "gatewayCertPath": "",
+  "gatewayCertPassword": "",
+  "gatewayGenerateDemoCert": true,
+  "gatewayDemoCertPath": "./storage/demo-certificate.p12",
+  "gatewayDemoCertPassword": "demo123",
+  "odooGatewayUrl": "http://host.docker.internal:3000"
+}

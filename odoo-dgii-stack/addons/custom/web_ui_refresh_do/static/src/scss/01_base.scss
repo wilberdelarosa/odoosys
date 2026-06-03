@@ -1,0 +1,140 @@
+// =============================================================================
+//  01_base.scss
+//  Reset visual y tipografia global del web client de Odoo.
+//  Todo el SCSS del modulo esta scoped bajo .o_web_client para no afectar
+//  el portal publico ni paginas externas (POS, Website).
+// =============================================================================
+
+.o_web_client {
+    font-family: var(--od-font-sans);
+    font-size: var(--od-font-size-base);
+    font-weight: var(--od-font-weight-regular);
+    line-height: var(--od-line-height-base);
+    color: var(--od-text-main);
+    background-color: var(--od-bg-app);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+
+    // Headings con jerarquia clara
+    h1, .h1 {
+        font-size: var(--od-font-size-3xl);
+        font-weight: var(--od-font-weight-bold);
+        line-height: var(--od-line-height-tight);
+        letter-spacing: var(--od-tracking-tight);
+        color: var(--od-text-strong);
+    }
+    h2, .h2 {
+        font-size: var(--od-font-size-2xl);
+        font-weight: var(--od-font-weight-semibold);
+        line-height: var(--od-line-height-tight);
+        letter-spacing: var(--od-tracking-tight);
+        color: var(--od-text-strong);
+    }
+    h3, .h3 {
+        font-size: var(--od-font-size-xl);
+        font-weight: var(--od-font-weight-semibold);
+        line-height: var(--od-line-height-snug);
+        color: var(--od-text-strong);
+    }
+    h4, .h4 {
+        font-size: var(--od-font-size-lg);
+        font-weight: var(--od-font-weight-semibold);
+        color: var(--od-text-strong);
+    }
+    h5, .h5 {
+        font-size: var(--od-font-size-md);
+        font-weight: var(--od-font-weight-semibold);
+        color: var(--od-text-strong);
+    }
+    h6, .h6 {
+        font-size: var(--od-font-size-sm);
+        font-weight: var(--od-font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: var(--od-tracking-caps);
+        color: var(--od-text-muted);
+    }
+
+    // Texto secundario uniforme
+    .text-muted,
+    .o_form_label_empty,
+    small {
+        color: var(--od-text-muted) !important;
+    }
+
+    // Numeros tabulares con monoespaciada para columnas de cifras
+    .o_data_cell.o_field_monetary,
+    .o_data_cell.o_field_float,
+    .o_data_cell.o_field_integer,
+    .o_field_monetary input,
+    .o_field_float input,
+    .o_field_integer input {
+        font-feature-settings: "tnum", "lnum";
+        font-variant-numeric: tabular-nums;
+    }
+
+    // Codigos NCF, RNC, referencias - mejor con mono
+    .o_field_widget[name$="ncf"] input,
+    .o_field_widget[name$="rnc"] input,
+    .o_field_widget[name$="vat"] input,
+    .o_field_widget[name="reference"] input,
+    .o_field_widget[name="ref"] input,
+    .o_field_widget[name="default_code"] input {
+        font-family: var(--od-font-mono);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+    }
+
+    // Scrollbars modernas
+    *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    *::-webkit-scrollbar-thumb {
+        background: var(--od-border-medium);
+        border-radius: var(--od-radius-pill);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+        background: var(--od-border-strong);
+        background-clip: padding-box;
+        border: 2px solid transparent;
+    }
+
+    // Selecciones de texto con color de marca
+    ::selection {
+        background: var(--od-color-primary-soft);
+        color: var(--od-color-primary-strong);
+    }
+
+    // Foco accesible y elegante (sustituye outlines azules feos del navegador)
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+        outline: none;
+        box-shadow: var(--od-shadow-focus);
+        border-radius: var(--od-radius-sm);
+    }
+
+    // Layout principal mas aireado
+    .o_action_manager {
+        background-color: var(--od-bg-app);
+    }
+
+    // Loading global con color de marca
+    .o_loading {
+        background: var(--od-color-primary-strong) !important;
+        color: var(--od-text-on-primary) !important;
+        font-weight: var(--od-font-weight-semibold);
+        letter-spacing: var(--od-tracking-wide);
+        border-radius: 0 0 var(--od-radius-md) var(--od-radius-md);
+        padding: var(--od-space-2) var(--od-space-4);
+    }
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ecf_document_template_tree" model="ir.ui.view">
+        <field name="name">ecf.document.template.tree</field>
+        <field name="model">ecf.document.template</field>
+        <field name="arch" type="xml">
+            <tree string="Plantillas e-CF">
+                <field name="name"/>
+                <field name="template_type"/>
+                <field name="is_default"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ecf_document_template_form" model="ir.ui.view">
+        <field name="name">ecf.document.template.form</field>
+        <field name="model">ecf.document.template</field>
+        <field name="arch" type="xml">
+            <form string="Plantilla e-CF">
+                <header>
+                    <button name="action_set_default" type="object" string="Usar por defecto" class="oe_highlight"/>
+                    <button name="action_preview_with_latest_invoice" type="object" string="Probar con ultima factura"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="template_type"/>
+                        <field name="is_default"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="HTML">
+                            <field name="body_html" widget="text" nolabel="1"/>
+                        </page>
+                        <page string="CSS">
+                            <field name="css" widget="text" nolabel="1"/>
+                        </page>
+                        <page string="Variables">
+                            <field name="notes" widget="text" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ecf_document_template" model="ir.actions.act_window">
+        <field name="name">Plantillas e-CF</field>
+        <field name="res_model">ecf.document.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ecf_document_template"
+              name="Plantillas e-CF"
+              parent="l10n_do_accounting.menu_dgii_config"
+              action="action_ecf_document_template"
+              sequence="40"/>
+</odoo>

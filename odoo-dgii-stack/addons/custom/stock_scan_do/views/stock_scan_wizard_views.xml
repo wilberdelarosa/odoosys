@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_scan_do_wizard_form" model="ir.ui.view">
+        <field name="name">stock.scan.do.wizard.form</field>
+        <field name="model">stock.scan.do.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Escaneo de inventario">
+                <group>
+                    <field name="picking_id" readonly="1"/>
+                    <field name="scan_code"
+                           required="1"
+                           placeholder="Escanea un barcode o referencia interna"/>
+                    <field name="qty_increment"/>
+                </group>
+                <group string="Ultimo escaneo">
+                    <field name="last_scan_code" readonly="1"/>
+                    <field name="last_message" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_apply_scan"
+                            type="object"
+                            string="Registrar escaneo"
+                            class="btn-primary"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

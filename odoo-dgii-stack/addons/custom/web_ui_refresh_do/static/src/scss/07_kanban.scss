@@ -1,0 +1,140 @@
+// =============================================================================
+//  07_kanban.scss
+//  Tarjetas Kanban - look "Linear/Notion" - sombras suaves, hover elegante.
+// =============================================================================
+
+.o_web_client {
+
+    .o_kanban_view {
+        background: var(--od-bg-app);
+        padding: var(--od-space-4) var(--od-space-6);
+
+        // Contenedor de columnas
+        &.o_kanban_grouped {
+            gap: var(--od-space-4);
+        }
+
+        // Columnas (estados, etapas)
+        .o_kanban_group,
+        .o_column {
+            background: var(--od-bg-muted);
+            border-radius: var(--od-radius-lg);
+            padding: var(--od-space-3);
+            min-width: 320px;
+
+            .o_kanban_header_title,
+            .o_column_title {
+                font-size: var(--od-font-size-sm);
+                font-weight: var(--od-font-weight-bold);
+                text-transform: uppercase;
+                letter-spacing: var(--od-tracking-caps);
+                color: var(--od-text-muted);
+                padding: var(--od-space-2) var(--od-space-3);
+            }
+
+            .o_column_quick_create {
+                background: var(--od-bg-surface);
+                border-radius: var(--od-radius-md);
+                border: 1px dashed var(--od-border-medium);
+                padding: var(--od-space-3);
+            }
+        }
+
+        // Tarjetas individuales
+        .o_kanban_record,
+        .oe_kanban_card,
+        .oe_kanban_global_click {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-border-soft);
+            border-radius: var(--od-radius-md);
+            padding: var(--od-space-4);
+            margin-bottom: var(--od-space-3);
+            box-shadow: var(--od-shadow-xs);
+            transition: all var(--od-duration-fast) var(--od-ease);
+            cursor: pointer;
+
+            &:hover {
+                border-color: var(--od-color-primary);
+                box-shadow: var(--od-shadow-md);
+                transform: translateY(-2px);
+            }
+
+            // Titulo de la tarjeta
+            strong, .o_kanban_record_title {
+                color: var(--od-text-strong);
+                font-weight: var(--od-font-weight-semibold);
+                font-size: var(--od-font-size-md);
+                line-height: var(--od-line-height-snug);
+            }
+
+            // Subtitulos
+            .o_kanban_record_subtitle,
+            .text-muted {
+                color: var(--od-text-muted) !important;
+                font-size: var(--od-font-size-sm);
+            }
+
+            // Imagen del producto/contacto
+            .o_kanban_image {
+                border-radius: var(--od-radius-md);
+                overflow: hidden;
+                background: var(--od-bg-muted);
+            }
+
+            // Footer con etiquetas y prioridad
+            .o_kanban_record_bottom,
+            .oe_kanban_bottom_right,
+            .oe_kanban_bottom_left {
+                margin-top: var(--od-space-3);
+                font-size: var(--od-font-size-xs);
+                color: var(--od-text-muted);
+            }
+        }
+
+        // Vista Kanban no agrupada (productos, contactos)
+        &.o_kanban_ungrouped {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: var(--od-space-4);
+
+            .o_kanban_record {
+                margin-bottom: 0;
+            }
+        }
+
+        // Botones de creacion rapida en tarjeta
+        .o_kanban_quick_create {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-color-primary);
+            border-radius: var(--od-radius-md);
+            box-shadow: var(--od-shadow-md);
+            padding: var(--od-space-3);
+        }
+    }
+
+    // Iconos de aplicaciones (Apps menu kanban)
+    .o_apps {
+        .o_app {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-border-soft);
+            border-radius: var(--od-radius-lg);
+            padding: var(--od-space-6);
+            box-shadow: var(--od-shadow-xs);
+            transition: all var(--od-duration-base) var(--od-ease);
+            text-align: center;
+
+            &:hover {
+                border-color: var(--od-color-primary);
+                box-shadow: var(--od-shadow-lg);
+                transform: translateY(-3px) scale(1.01);
+            }
+
+            .o_caption {
+                font-weight: var(--od-font-weight-bold);
+                color: var(--od-text-strong);
+                font-size: var(--od-font-size-md);
+                margin-top: var(--od-space-3);
+            }
+        }
+    }
+}

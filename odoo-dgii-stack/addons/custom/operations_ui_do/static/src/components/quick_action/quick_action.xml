@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="operations_ui_do.QuickAction">
+        <button class="ops-quick-action" t-att-class="`tone-${props.tone}`" t-on-click="onClick">
+            <div class="ops-quick-action__icon">
+                <i class="fa" t-att-class="`fa-${props.icon}`"/>
+            </div>
+            <div class="ops-quick-action__body">
+                <div class="ops-quick-action__title" t-esc="props.title"/>
+                <div class="ops-quick-action__desc" t-esc="props.description" t-if="props.description"/>
+            </div>
+            <i class="fa fa-arrow-right ops-quick-action__arrow"/>
+        </button>
+    </t>
+
+</templates>

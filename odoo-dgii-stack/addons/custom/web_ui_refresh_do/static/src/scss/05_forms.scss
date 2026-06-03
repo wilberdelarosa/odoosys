@@ -1,0 +1,224 @@
+// =============================================================================
+//  05_forms.scss
+//  Formularios de Odoo - look limpio, jerarquia clara, inputs aireados.
+// =============================================================================
+
+.o_web_client {
+
+    .o_form_view {
+        background: var(--od-bg-app);
+
+        // Sheet (la "hoja" central del formulario)
+        .o_form_sheet_bg {
+            background: var(--od-bg-app);
+            padding: var(--od-space-6) 0;
+
+            .o_form_sheet {
+                background: var(--od-bg-surface);
+                border: 1px solid var(--od-border-soft);
+                border-radius: var(--od-radius-lg);
+                box-shadow: var(--od-shadow-md);
+                padding: var(--od-space-8);
+                max-width: 1200px;
+            }
+        }
+
+        // Status bar (estados: Borrador -> Enviado -> Confirmado)
+        .o_form_statusbar {
+            background: var(--od-bg-surface);
+            border-bottom: 1px solid var(--od-border-soft);
+            padding: var(--od-space-3) var(--od-space-6);
+            border-radius: var(--od-radius-lg) var(--od-radius-lg) 0 0;
+
+            .o_statusbar_status {
+                .btn {
+                    background: transparent;
+                    color: var(--od-text-muted);
+                    font-weight: var(--od-font-weight-semibold);
+                    border: none;
+                    border-radius: var(--od-radius-pill);
+                    padding: 6px 14px;
+                    font-size: var(--od-font-size-sm);
+                    text-transform: uppercase;
+                    letter-spacing: var(--od-tracking-wide);
+
+                    &.btn-primary,
+                    &.o_arrow_button_current {
+                        background: var(--od-color-primary-soft);
+                        color: var(--od-color-primary-strong);
+                    }
+                }
+            }
+
+            // Botones del header (Confirmar, Validar, Cancelar)
+            .o_statusbar_buttons {
+                gap: var(--od-space-2);
+            }
+        }
+
+        // Botones smart (banner superior con metricas: "5 Ordenes", "$ Ingresos")
+        .oe_button_box {
+            gap: var(--od-space-2);
+
+            .oe_stat_button {
+                background: var(--od-bg-surface);
+                border: 1px solid var(--od-border-soft);
+                border-radius: var(--od-radius-md);
+                padding: var(--od-space-3) var(--od-space-4);
+                min-width: 120px;
+                box-shadow: var(--od-shadow-xs);
+                transition: all var(--od-duration-fast) var(--od-ease);
+
+                &:hover {
+                    border-color: var(--od-color-primary);
+                    box-shadow: var(--od-shadow-sm);
+                    transform: translateY(-1px);
+                }
+
+                .o_stat_value {
+                    font-size: var(--od-font-size-lg);
+                    font-weight: var(--od-font-weight-bold);
+                    color: var(--od-color-primary-strong);
+                    font-feature-settings: "tnum";
+                }
+
+                .o_stat_text {
+                    font-size: var(--od-font-size-xs);
+                    color: var(--od-text-muted);
+                    text-transform: uppercase;
+                    letter-spacing: var(--od-tracking-wide);
+                    font-weight: var(--od-font-weight-semibold);
+                }
+
+                .fa, i {
+                    color: var(--od-color-primary);
+                    font-size: 18px;
+                }
+            }
+        }
+
+        // Titulo principal del registro (h1 dentro del form)
+        .oe_title h1,
+        .oe_title .o_field_widget input {
+            font-size: var(--od-font-size-3xl);
+            font-weight: var(--od-font-weight-bold);
+            color: var(--od-text-strong);
+            letter-spacing: var(--od-tracking-tight);
+            line-height: var(--od-line-height-tight);
+        }
+
+        // Etiquetas de campos
+        .o_form_label,
+        label {
+            color: var(--od-text-muted);
+            font-size: var(--od-font-size-sm);
+            font-weight: var(--od-font-weight-semibold);
+            text-transform: uppercase;
+            letter-spacing: var(--od-tracking-caps);
+            margin-bottom: var(--od-space-1);
+        }
+
+        // Inputs y selects
+        .o_field_widget input.o_input,
+        .o_field_widget textarea.o_input,
+        .o_field_widget .o_input,
+        input.o_input,
+        textarea.o_input,
+        select.o_input,
+        .o_field_widget input[type="text"],
+        .o_field_widget input[type="number"],
+        .o_field_widget input[type="email"] {
+            background: var(--od-bg-surface);
+            border: 1px solid var(--od-border-medium);
+            border-radius: var(--od-radius-sm);
+            padding: 8px 12px;
+            font-size: var(--od-font-size-base);
+            color: var(--od-text-strong);
+            min-height: 38px;
+            transition: all var(--od-duration-fast) var(--od-ease);
+            box-shadow: none;
+
+            &::placeholder {
+                color: var(--od-text-subtle);
+            }
+
+            &:hover {
+                border-color: var(--od-border-strong);
+            }
+
+            &:focus {
+                border-color: var(--od-border-focus);
+                box-shadow: var(--od-shadow-focus);
+                outline: none;
+            }
+        }
+
+        // Campos requeridos / vacios
+        .o_field_invalid input,
+        .o_field_invalid .o_input {
+            border-color: var(--od-color-danger) !important;
+            background: var(--od-color-danger-soft) !important;
+        }
+
+        // Notebook (pestañas)
+        .o_notebook {
+            margin-top: var(--od-space-6);
+
+            .o_notebook_headers {
+                border-bottom: 2px solid var(--od-border-soft);
+                padding: 0;
+                gap: var(--od-space-1);
+
+                .nav-link,
+                .o_notebook_headers .nav-item .nav-link {
+                    color: var(--od-text-muted);
+                    font-weight: var(--od-font-weight-semibold);
+                    font-size: var(--od-font-size-base);
+                    background: transparent;
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    margin-bottom: -2px;
+                    padding: var(--od-space-3) var(--od-space-4);
+                    border-radius: 0;
+                    transition: all var(--od-duration-fast) var(--od-ease);
+
+                    &:hover {
+                        color: var(--od-text-strong);
+                        border-bottom-color: var(--od-border-medium);
+                    }
+
+                    &.active {
+                        color: var(--od-color-primary-strong);
+                        border-bottom-color: var(--od-color-primary);
+                        background: transparent;
+                    }
+                }
+            }
+        }
+
+        // Grupos de campos
+        .o_group {
+            .o_inner_group {
+                margin-bottom: var(--od-space-4);
+            }
+        }
+
+        // Campos relacionados (m2o) con autocompletar
+        .o_field_many2one_selection {
+            input {
+                padding-right: 30px;
+            }
+
+            .o_external_button,
+            .o_input_dropdown button {
+                background: transparent;
+                border: none;
+                color: var(--od-text-muted);
+
+                &:hover {
+                    color: var(--od-color-primary);
+                }
+            }
+        }
+    }
+}

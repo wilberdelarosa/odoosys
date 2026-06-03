@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ecf_test_run_tree" model="ir.ui.view">
+        <field name="name">ecf.test.run.tree</field>
+        <field name="model">ecf.test.run</field>
+        <field name="arch" type="xml">
+            <tree string="Pruebas e-CF" decoration-success="state == 'success'" decoration-warning="state == 'warning'" decoration-danger="state == 'error'">
+                <field name="name"/>
+                <field name="state" widget="badge"/>
+                <field name="environment"/>
+                <field name="gateway_url"/>
+                <field name="gateway_ok"/>
+                <field name="certificate_ok"/>
+                <field name="precertification_ok"/>
+                <field name="dry_invoice_ok"/>
+                <field name="last_run_at"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ecf_test_run_form" model="ir.ui.view">
+        <field name="name">ecf.test.run.form</field>
+        <field name="model">ecf.test.run</field>
+        <field name="arch" type="xml">
+            <form string="Laboratorio e-CF">
+                <header>
+                    <button name="action_run_full_test" type="object" string="Ejecutar prueba completa" class="oe_highlight"/>
+                    <button name="action_open_gateway" type="object" string="Abrir gateway"/>
+                    <button name="action_reset" type="object" string="Limpiar resultados"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,success,warning,error"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Prueba e-CF"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Conexion y ambiente">
+                            <field name="gateway_url"/>
+                            <field name="environment"/>
+                            <field name="dry_run"/>
+                            <field name="last_run_at" readonly="1"/>
+                        </group>
+                        <group string="Estado automatico">
+                            <field name="gateway_ok" readonly="1"/>
+                            <field name="certificate_ok" readonly="1"/>
+                            <field name="precertification_ok" readonly="1"/>
+                            <field name="dry_invoice_ok" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Payload dry-run Odoo">
+                        <group>
+                            <field name="fiscal_number"/>
+                            <field name="customer_rnc"/>
+                            <field name="customer_name"/>
+                        </group>
+                        <group>
+                            <field name="line_name"/>
+                            <field name="quantity"/>
+                            <field name="price"/>
+                            <field name="tax_rate"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Resumen">
+                            <field name="summary" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                        <page string="Archivos que debes traer">
+                            <field name="required_files" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                        <page string="Siguientes pasos">
+                            <field name="next_steps" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                        <page string="XML e-CF firmado">
+                            <field name="signed_ecf_xml" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                        <page string="ARECF firmado">
+                            <field name="signed_arecf_xml" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                        <page string="ACECF firmado">
+                            <field name="signed_acecf_xml" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                        <page string="JSON tecnico">
+                            <field name="result_json" readonly="1" nolabel="1" widget="text"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ecf_test_run" model="ir.actions.act_window">
+        <field name="name">Laboratorio e-CF</field>
+        <field name="res_model">ecf.test.run</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'default_dry_run': True}</field>
+    </record>
+
+    <menuitem id="menu_ecf_test_lab_root"
+              name="Pruebas e-CF"
+              sequence="4"/>
+
+    <menuitem id="menu_ecf_test_lab_runs"
+              name="Laboratorio e-CF"
+              parent="menu_ecf_test_lab_root"
+              action="action_ecf_test_run"
+              sequence="1"/>
+
+</odoo>

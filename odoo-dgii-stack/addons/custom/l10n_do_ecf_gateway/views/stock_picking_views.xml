@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_ecf_logistics" model="ir.ui.view">
+        <field name="name">stock.picking.form.ecf.logistics</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_dgii_prepare_dispatch" type="object" string="Planificar despacho" class="btn-secondary" invisible="state in ('done', 'cancel')"/>
+                <button name="action_dgii_mark_loaded" type="object" string="Marcar cargado" class="btn-secondary" invisible="state in ('done', 'cancel')"/>
+                <button name="action_dgii_mark_delivered" type="object" string="Cerrar entrega" class="oe_highlight" invisible="state != 'done'"/>
+            </xpath>
+            <xpath expr="//sheet/group" position="inside">
+                <group string="Logistica y despacho">
+                    <field name="dgii_dispatch_flow_state" readonly="1"/>
+                    <field name="dgii_logistics_category"/>
+                    <field name="dgii_dispatch_reference"/>
+                    <field name="dgii_scheduled_dispatch_date"/>
+                    <field name="dgii_driver_name"/>
+                    <field name="dgii_vehicle_plate"/>
+                    <field name="dgii_source_invoice_id"/>
+                </group>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Ruta / evidencia" name="dgii_dispatch_notes">
+                    <group>
+                        <field name="dgii_route_notes" widget="text"/>
+                        <field name="dgii_delivery_proof" widget="text"/>
+                    </group>
+                    <button name="action_dgii_open_related_invoice" type="object" string="Abrir factura e-CF" class="btn-secondary"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

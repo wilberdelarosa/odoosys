@@ -1,0 +1,100 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:17.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      USER: ${ODOO_DB_USER:-odoo}
+      PASSWORD: ${ODOO_DB_PASSWORD}
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ../../odoo-dgii-stack/config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ../../odoo-dgii-stack/addons/l10n-dominicana:/mnt/extra-addons/l10n-dominicana:ro
+      - ../../odoo-dgii-stack/addons/custom:/mnt/extra-addons/custom:ro
+    command: >
+      odoo -c /etc/odoo/odoo.conf
+      --db_host=db
+      --db_user=${ODOO_DB_USER:-odoo}
+      --db_password=${ODOO_DB_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=root_default"
+      - "traefik.http.routers.dgii-piloto-erp.rule=Host(`${ODOO_DOMAIN}`)"
+      - "traefik.http.routers.dgii-piloto-erp.entrypoints=websecure"
+      - "traefik.http.routers.dgii-piloto-erp.tls=true"
+      - "traefik.http.routers.dgii-piloto-erp.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.dgii-piloto-erp.loadbalancer.server.port=8069"
+    networks:
+      - default
+      - root_default
+
+  gateway:
+    build:
+      context: ../../ecf-endpoints-service
+    restart: unless-stopped
+    env_file:
+      - ./gateway.env
+    volumes:
+      - gateway-storage:/app/storage
+      - ./certificados:/app/storage/certificados:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=root_default"
+      - "traefik.http.routers.dgii-piloto-gateway-fe.rule=Host(`${GATEWAY_DOMAIN}`) && PathPrefix(`/fe/`)"
+      - "traefik.http.routers.dgii-piloto-gateway-fe.entrypoints=websecure"
+      - "traefik.http.routers.dgii-piloto-gateway-fe.tls=true"
+      - "traefik.http.routers.dgii-piloto-gateway-fe.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.dgii-piloto-gateway-fe.priority=100"
+      - "traefik.http.routers.dgii-piloto-gateway-fe.service=dgii-piloto-gateway"
+      - "traefik.http.routers.dgii-piloto-gateway-health.rule=Host(`${GATEWAY_DOMAIN}`) && Path(`/health`)"
+      - "traefik.http.routers.dgii-piloto-gateway-health.entrypoints=websecure"
+      - "traefik.http.routers.dgii-piloto-gateway-health.tls=true"
+      - "traefik.http.routers.dgii-piloto-gateway-health.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.dgii-piloto-gateway-health.priority=100"
+      - "traefik.http.routers.dgii-piloto-gateway-health.service=dgii-piloto-gateway"
+      - "traefik.http.routers.dgii-piloto-gateway-software.rule=Host(`${GATEWAY_DOMAIN}`) && Path(`/software-config`)"
+      - "traefik.http.routers.dgii-piloto-gateway-software.entrypoints=websecure"
+      - "traefik.http.routers.dgii-piloto-gateway-software.tls=true"
+      - "traefik.http.routers.dgii-piloto-gateway-software.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.dgii-piloto-gateway-software.priority=100"
+      - "traefik.http.routers.dgii-piloto-gateway-software.service=dgii-piloto-gateway"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.rule=Host(`${GATEWAY_DOMAIN}`)"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.entrypoints=websecure"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.tls=true"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.priority=10"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.middlewares=dgii-piloto-auth"
+      - "traefik.http.routers.dgii-piloto-gateway-admin.service=dgii-piloto-gateway"
+      - "traefik.http.middlewares.dgii-piloto-auth.basicauth.users=${GATEWAY_ADMIN_USER}:${GATEWAY_ADMIN_PASSWORD_HASH}"
+      - "traefik.http.services.dgii-piloto-gateway.loadbalancer.server.port=3000"
+    networks:
+      - default
+      - root_default
+
+networks:
+  root_default:
+    external: true
+
+volumes:
+  odoo-db-data:
+  odoo-web-data:
+  gateway-storage:

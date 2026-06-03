@@ -1,0 +1,126 @@
+// =============================================================================
+//  02_navbar.scss
+//  Navbar superior de Odoo modernizada.
+//  Look "control center" - oscura, premium, con marca clara.
+// =============================================================================
+
+.o_web_client {
+
+    .o_main_navbar {
+        background: linear-gradient(180deg, var(--od-color-primary-strong) 0%, var(--od-color-primary) 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        height: 52px;
+        padding: 0 var(--od-space-4);
+        box-shadow: 0 2px 8px rgba(8, 69, 75, 0.15);
+        z-index: var(--od-z-navbar);
+
+        // Logo / app switcher
+        .o_menu_toggle,
+        .o_navbar_apps_menu > button {
+            color: rgba(255, 255, 255, 0.95) !important;
+            border-radius: var(--od-radius-sm);
+            padding: var(--od-space-2) var(--od-space-3);
+            transition: background var(--od-duration-fast) var(--od-ease);
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.10);
+            }
+
+            i, .fa {
+                font-size: 18px;
+            }
+        }
+
+        // Breadcrumb / nombre del modulo activo
+        .o_menu_brand,
+        .o_menu_sections > .o_nav_entry {
+            color: rgba(255, 255, 255, 0.92) !important;
+            font-weight: var(--od-font-weight-semibold);
+            font-size: var(--od-font-size-base);
+            letter-spacing: var(--od-tracking-tight);
+            border-radius: var(--od-radius-sm);
+            padding: var(--od-space-2) var(--od-space-3);
+            transition: all var(--od-duration-fast) var(--od-ease);
+
+            &:hover, &.show, &.active {
+                background: rgba(255, 255, 255, 0.10);
+                color: #FFFFFF !important;
+            }
+        }
+
+        // Acciones del lado derecho (mensajes, actividades, usuario)
+        .o_menu_systray {
+            > * {
+                color: rgba(255, 255, 255, 0.85) !important;
+
+                .dropdown-toggle, > button {
+                    color: inherit !important;
+                    border-radius: var(--od-radius-sm);
+                    padding: var(--od-space-2) var(--od-space-3);
+                    transition: background var(--od-duration-fast) var(--od-ease);
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.10);
+                    }
+                }
+            }
+
+            // Avatar del usuario
+            .o_user_menu img {
+                border: 2px solid rgba(255, 255, 255, 0.30);
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                object-fit: cover;
+            }
+
+            // Badges de notificaciones
+            .o-mail-DiscussSystray-counter,
+            .o-mail-ActivityMenu-counter,
+            .badge {
+                background: var(--od-color-accent) !important;
+                color: var(--od-color-primary-strong) !important;
+                font-weight: var(--od-font-weight-bold);
+                font-size: 10px;
+                border-radius: var(--od-radius-pill);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+                border: none !important;
+            }
+        }
+
+        // Menus desplegables que cuelgan del navbar
+        .dropdown-menu {
+            background: var(--od-bg-elevated);
+            border: 1px solid var(--od-border-soft);
+            border-radius: var(--od-radius-md);
+            box-shadow: var(--od-shadow-lg);
+            padding: var(--od-space-2);
+            margin-top: var(--od-space-2);
+            min-width: 240px;
+
+            .dropdown-item {
+                color: var(--od-text-main);
+                font-size: var(--od-font-size-base);
+                font-weight: var(--od-font-weight-medium);
+                padding: var(--od-space-2) var(--od-space-3);
+                border-radius: var(--od-radius-sm);
+                transition: all var(--od-duration-fast) var(--od-ease);
+
+                &:hover {
+                    background: var(--od-color-primary-soft);
+                    color: var(--od-color-primary-strong);
+                }
+
+                &.active, &:active {
+                    background: var(--od-color-primary);
+                    color: var(--od-text-on-primary);
+                }
+            }
+
+            .dropdown-divider {
+                border-color: var(--od-border-soft);
+                margin: var(--od-space-2) 0;
+            }
+        }
+    }
+}

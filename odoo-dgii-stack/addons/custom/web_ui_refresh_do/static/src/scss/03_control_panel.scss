@@ -1,0 +1,178 @@
+// =============================================================================
+//  03_control_panel.scss
+//  Panel de control superior (titulos, breadcrumb, search, paginador, acciones).
+//  Look limpio tipo dashboard moderno.
+// =============================================================================
+
+.o_web_client {
+
+    .o_control_panel {
+        background: var(--od-bg-surface);
+        border-bottom: 1px solid var(--od-border-soft);
+        padding: var(--od-space-4) var(--od-space-6);
+        gap: var(--od-space-3);
+        box-shadow: var(--od-shadow-xs);
+        min-height: 64px;
+
+        // Breadcrumb
+        .breadcrumb,
+        .o_breadcrumb,
+        ol.breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            font-size: var(--od-font-size-sm);
+            font-weight: var(--od-font-weight-medium);
+
+            .breadcrumb-item {
+                color: var(--od-text-muted);
+
+                a {
+                    color: var(--od-text-muted);
+                    text-decoration: none;
+                    border-radius: var(--od-radius-xs);
+                    padding: 2px 6px;
+                    transition: all var(--od-duration-fast) var(--od-ease);
+
+                    &:hover {
+                        background: var(--od-bg-muted);
+                        color: var(--od-text-main);
+                    }
+                }
+
+                &.active,
+                &:last-child {
+                    color: var(--od-text-strong);
+                    font-weight: var(--od-font-weight-semibold);
+                }
+
+                + .breadcrumb-item::before {
+                    color: var(--od-text-subtle);
+                    font-weight: var(--od-font-weight-regular);
+                    padding: 0 var(--od-space-2);
+                }
+            }
+        }
+
+        // Titulo del registro / vista
+        .o_last_breadcrumb_item {
+            font-size: var(--od-font-size-xl);
+            font-weight: var(--od-font-weight-bold);
+            color: var(--od-text-strong);
+            letter-spacing: var(--od-tracking-tight);
+            line-height: var(--od-line-height-tight);
+        }
+
+        // Buscador
+        .o_searchview,
+        .o_searchview.focused {
+            background: var(--od-bg-muted);
+            border: 1px solid transparent;
+            border-radius: var(--od-radius-md);
+            padding: var(--od-space-2) var(--od-space-3);
+            min-height: 40px;
+            transition: all var(--od-duration-fast) var(--od-ease);
+
+            &:hover {
+                background: var(--od-bg-surface-2);
+                border-color: var(--od-border-soft);
+            }
+
+            &.focused {
+                background: var(--od-bg-surface);
+                border-color: var(--od-border-focus);
+                box-shadow: var(--od-shadow-focus);
+            }
+
+            input.o_searchview_input {
+                font-size: var(--od-font-size-base);
+                color: var(--od-text-main);
+
+                &::placeholder {
+                    color: var(--od-text-subtle);
+                }
+            }
+
+            // Facetas (filtros activos)
+            .o_searchview_facet {
+                background: var(--od-color-primary-soft);
+                color: var(--od-color-primary-strong);
+                border: 1px solid transparent;
+                border-radius: var(--od-radius-pill);
+                padding: 2px 10px;
+                font-size: var(--od-font-size-xs);
+                font-weight: var(--od-font-weight-semibold);
+                margin: 2px;
+
+                .o_facet_remove {
+                    color: var(--od-color-primary);
+                    opacity: 0.6;
+
+                    &:hover {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+
+        // Paginador "1-80 / 200"
+        .o_pager {
+            font-family: var(--od-font-mono);
+            font-size: var(--od-font-size-sm);
+            color: var(--od-text-muted);
+            background: var(--od-bg-muted);
+            border-radius: var(--od-radius-md);
+            padding: 2px 4px;
+
+            .o_pager_value {
+                color: var(--od-text-strong);
+                font-weight: var(--od-font-weight-semibold);
+            }
+
+            button {
+                background: transparent;
+                border: none;
+                color: var(--od-text-muted);
+                border-radius: var(--od-radius-sm);
+                width: 28px;
+                height: 28px;
+
+                &:hover:not(:disabled) {
+                    background: var(--od-bg-surface);
+                    color: var(--od-text-strong);
+                }
+            }
+        }
+
+        // Selector de vista (lista, kanban, calendar, etc.)
+        .o_cp_switch_buttons,
+        .o_switch_view {
+            background: var(--od-bg-muted);
+            border-radius: var(--od-radius-md);
+            padding: 3px;
+            gap: 2px;
+            border: none !important;
+
+            .o_switch_view {
+                background: transparent;
+                border: none !important;
+                color: var(--od-text-muted);
+                width: 32px;
+                height: 32px;
+                border-radius: var(--od-radius-sm);
+                transition: all var(--od-duration-fast) var(--od-ease);
+
+                &:hover {
+                    background: var(--od-bg-surface);
+                    color: var(--od-text-main);
+                }
+
+                &.active {
+                    background: var(--od-bg-surface);
+                    color: var(--od-color-primary-strong);
+                    box-shadow: var(--od-shadow-sm);
+                }
+            }
+        }
+    }
+}

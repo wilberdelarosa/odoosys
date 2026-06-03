@@ -1,0 +1,77 @@
+.ops-quick-action {
+    background: var(--od-bg-surface);
+    border: 1px solid var(--od-border-soft);
+    border-radius: var(--od-radius-lg);
+    padding: var(--od-space-4) var(--od-space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--od-space-4);
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: all var(--od-duration-base) var(--od-ease);
+    box-shadow: var(--od-shadow-xs);
+    color: var(--od-text-main);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--od-shadow-md);
+        border-color: var(--od-color-primary);
+        background: var(--od-color-primary-tint);
+
+        .ops-quick-action__arrow {
+            transform: translateX(4px);
+            opacity: 1;
+        }
+    }
+
+    .ops-quick-action__icon {
+        flex: 0 0 48px;
+        width: 48px;
+        height: 48px;
+        border-radius: var(--od-radius-md);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+
+        background: var(--od-color-primary-soft);
+        color: var(--od-color-primary-strong);
+    }
+    &.tone-accent .ops-quick-action__icon {
+        background: var(--od-color-accent-soft);
+        color: #8a5c00;
+    }
+    &.tone-neutral .ops-quick-action__icon {
+        background: var(--od-bg-muted);
+        color: var(--od-text-strong);
+    }
+
+    .ops-quick-action__body {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .ops-quick-action__title {
+        font-size: var(--od-font-size-md);
+        font-weight: var(--od-font-weight-bold);
+        color: var(--od-text-strong);
+        letter-spacing: var(--od-tracking-tight);
+    }
+
+    .ops-quick-action__desc {
+        font-size: var(--od-font-size-sm);
+        color: var(--od-text-muted);
+        line-height: var(--od-line-height-snug);
+    }
+
+    .ops-quick-action__arrow {
+        color: var(--od-color-primary);
+        opacity: 0.4;
+        transition: all var(--od-duration-base) var(--od-ease);
+        font-size: 14px;
+    }
+}

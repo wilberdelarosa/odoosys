@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:17.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      USER: ${ODOO_DB_USER:-odoo}
+      PASSWORD: ${ODOO_DB_PASSWORD}
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ../../odoo-dgii-stack/config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ../../odoo-dgii-stack/addons/l10n-dominicana:/mnt/extra-addons/l10n-dominicana:ro
+      - ../../odoo-dgii-stack/addons/custom:/mnt/extra-addons/custom:ro
+    command: >
+      odoo -c /etc/odoo/odoo.conf
+      --db_host=db
+      --db_user=${ODOO_DB_USER:-odoo}
+      --db_password=${ODOO_DB_PASSWORD}
+      --admin-passwd=${ODOO_MASTER_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "python3 - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://127.0.0.1:8069/web/health', timeout=5)\nPY"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  gateway:
+    build:
+      context: ../../ecf-endpoints-service
+    restart: unless-stopped
+    env_file:
+      - ./gateway.env
+    volumes:
+      - gateway-storage:/app/storage
+      - ./certificados:/app/storage/certificados:ro
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - odoo
+      - gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ODOO_DOMAIN: ${ODOO_DOMAIN}
+      GATEWAY_DOMAIN: ${GATEWAY_DOMAIN}
+      TLS_EMAIL: ${TLS_EMAIL}
+      GATEWAY_ADMIN_USER: ${GATEWAY_ADMIN_USER}
+      GATEWAY_ADMIN_PASSWORD_HASH: ${GATEWAY_ADMIN_PASSWORD_HASH}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    healthcheck:
+      test: ["CMD-SHELL", "caddy validate --config /etc/caddy/Caddyfile"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+
+volumes:
+  odoo-db-data:
+  odoo-web-data:
+  gateway-storage:
+  caddy-data:
+  caddy-config:

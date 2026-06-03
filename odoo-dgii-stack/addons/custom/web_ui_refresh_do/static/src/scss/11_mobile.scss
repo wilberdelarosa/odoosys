@@ -1,0 +1,77 @@
+// =============================================================================
+//  11_mobile.scss
+//  Adaptaciones responsive para tablets y movil.
+// =============================================================================
+
+@media (max-width: 991px) {
+    .o_web_client {
+        .o_main_navbar {
+            padding: 0 var(--od-space-3);
+            height: 48px;
+
+            .o_menu_brand {
+                font-size: var(--od-font-size-sm);
+            }
+        }
+
+        .o_control_panel {
+            padding: var(--od-space-3) var(--od-space-4);
+
+            .o_last_breadcrumb_item {
+                font-size: var(--od-font-size-lg);
+            }
+        }
+
+        .o_form_view .o_form_sheet_bg {
+            padding: var(--od-space-3) 0;
+
+            .o_form_sheet {
+                padding: var(--od-space-4);
+                border-radius: var(--od-radius-md);
+                margin: 0 var(--od-space-3);
+            }
+        }
+
+        .o_list_view {
+            margin: var(--od-space-3);
+            border-radius: var(--od-radius-md);
+        }
+
+        .o_kanban_view {
+            padding: var(--od-space-3);
+        }
+
+        .o_apps {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+            gap: var(--od-space-3) !important;
+
+            .o_app {
+                padding: var(--od-space-4) !important;
+            }
+        }
+    }
+}
+
+@media (max-width: 575px) {
+    .o_web_client {
+        .o_form_view .o_form_sheet_bg .o_form_sheet {
+            padding: var(--od-space-3);
+            margin: 0;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+        }
+
+        .o_list_view {
+            margin: 0;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+        }
+
+        .btn {
+            padding: 10px 14px;
+            min-height: 44px; // tactil amigable
+        }
+    }
+}
