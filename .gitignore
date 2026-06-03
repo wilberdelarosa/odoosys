@@ -30,7 +30,7 @@ Thumbs.db
 
 # Runtime artifacts
 windows-native/
-ecf-endpoints-service/storage/*
+ecf-endpoints-service/storage/**
 !ecf-endpoints-service/storage/.gitkeep
 !ecf-endpoints-service/storage/incoming/
 !ecf-endpoints-service/storage/incoming/.gitkeep
