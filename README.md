@@ -32,6 +32,19 @@ No se incluyen en este repo:
 - Docker Desktop con Docker Compose.
 - Git.
 
+## Credenciales demo
+
+Si usas la configuracion por defecto de `install-config.example.json`, las credenciales locales son:
+
+- Base de datos Odoo: `dgii_cliente`
+- Usuario Odoo: `admin@cliente.local`
+- Clave Odoo: `admin123`
+- Usuario PostgreSQL: `odoo`
+- Clave PostgreSQL: `odoo`
+- Clave del certificado demo del gateway: `demo123`
+
+Puedes cambiarlas copiando `install-config.example.json` a `install-config.json` antes de instalar.
+
 ## Instalacion rapida
 
 ### 1. Clonar el repositorio
@@ -103,6 +116,35 @@ Ese script:
 - crea/configura la base de datos Odoo,
 - instala modulos base, fiscales y de pruebas,
 - deja apuntado `l10n_do_ecf_gateway.url` al gateway local.
+
+## Scripts rapidos para cualquier maquina Windows
+
+Desde la raiz del repo tienes estos archivos listos para ejecutar:
+
+- `install-and-run-local.ps1`: instala todo y deja el stack corriendo.
+- `start-local.ps1`: prende Odoo + gateway si ya estaba instalado.
+- `stop-local.ps1`: apaga Odoo + gateway.
+- `install-and-run-local.cmd`, `start-local.cmd`, `stop-local.cmd`: wrappers para doble clic o CMD.
+
+### Instalar y dejar corriendo
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-and-run-local.ps1
+```
+
+### Prender sin reinstalar
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-local.ps1
+```
+
+### Apagar todo
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\stop-local.ps1
+```
+
+Si no existe `install-config.json`, `install-and-run-local.ps1` lo crea automaticamente desde el ejemplo y al final imprime las credenciales demo activas.
 
 ## Configuracion importante
 

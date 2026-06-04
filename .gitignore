@@ -5,6 +5,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+install-config.json
+desktop-app/desktop-app.config.json
 *.p12
 *.pem
 *.key
