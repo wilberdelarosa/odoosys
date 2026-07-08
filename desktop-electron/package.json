@@ -1,6 +1,6 @@
 {
   "name": "dgii-ecf-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Aplicacion desktop local DGII e-CF sobre backend Node sin Docker ni Odoo.",
   "author": "wilberdelarosa",

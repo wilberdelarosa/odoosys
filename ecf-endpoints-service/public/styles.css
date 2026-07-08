@@ -37,6 +37,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body.auth-locked {
+  overflow: hidden;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -127,6 +131,70 @@ body {
   padding: 16px 20px;
   border-radius: var(--radius);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.auth-session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 8px;
+}
+
+.session-user {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  max-width: 180px;
+  text-align: right;
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(10px);
+}
+
+.auth-overlay.active {
+  display: flex;
+}
+
+.auth-card {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid #dbe4f0;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28);
+}
+
+.auth-header h2 {
+  font-size: 1.35rem;
+  margin-bottom: 4px;
+}
+
+.auth-header p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .status-info {
@@ -286,6 +354,7 @@ body {
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+  font: inherit;
 }
 
 .preset-card:hover {
@@ -990,5 +1059,321 @@ pre {
 
   .hero {
     padding: 24px;
+  }
+}
+
+/* ============================================================
+   Ampliación: notas de crédito/débito, anulación, compras (606)
+   y reportes DGII 606/607/608
+   ============================================================ */
+
+/* La barra de tabs ahora aloja 5 pestañas */
+.nav-tabs {
+  flex-wrap: wrap;
+}
+
+.nav-tabs .tab-btn {
+  min-width: 150px;
+}
+
+/* Modal genérico (notas y anulación) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(10px);
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-card {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid #dbe4f0;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28);
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+
+.modal-header p {
+  font-size: 0.88rem;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.modal-body textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.checkbox-line {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.checkbox-line input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.note-item-input {
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  max-width: 110px;
+}
+
+/* Botones de acción destructiva */
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+.btn-danger-ghost {
+  color: var(--danger);
+  border-color: #fca5a5;
+}
+
+.btn-danger-ghost:hover {
+  background: #fef2f2;
+  border-color: var(--danger);
+  color: var(--danger-hover);
+}
+
+/* Badges por tipo de comprobante (kind) */
+.badge-kind {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.badge-kind-factura {
+  background: #eff6ff;
+  color: var(--primary);
+  border: 1px solid #bfdbfe;
+}
+
+.badge-kind-nc {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.badge-kind-nd {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.badge-kind-tipo {
+  background: var(--light);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.badge-cancelled {
+  background: #fef2f2;
+  color: var(--danger);
+  border: 1px solid #fca5a5;
+  text-transform: uppercase;
+}
+
+/* Filas de comprobantes anulados */
+.row-cancelled td {
+  opacity: 0.6;
+}
+
+.row-cancelled td:first-child strong {
+  text-decoration: line-through;
+}
+
+.invoice-related {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+.invoice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.invoice-actions .btn-compact {
+  margin-left: 0;
+}
+
+.invoice-no-actions {
+  font-size: 0.75rem;
+}
+
+/* Formulario de compras */
+.purchase-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Reportes DGII: rango, resumen y listado de formatos */
+.report-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 220px));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.period-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  background: var(--light);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.summary-card-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.summary-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.summary-row strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--light);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+}
+
+.report-row-info strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.report-row-info span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.report-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-row-actions .btn-compact {
+  margin-left: 0;
+}
+
+.report-viewer {
+  margin-top: 20px;
+}
+
+.report-view-title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.report-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.report-total-chip {
+  background: var(--light);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.report-total-chip strong {
+  color: var(--ink);
+}
+
+@media (max-width: 920px) {
+  .report-range {
+    grid-template-columns: 1fr;
   }
 }

@@ -26,8 +26,10 @@ export interface FiscalSequence {
 }
 
 export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'cheque' | 'otro';
+export type PurchasePaymentMethod = PaymentMethod | 'credito';
 export type PaymentStatus = 'pendiente' | 'parcial' | 'pagada';
 export type UserRole = 'admin' | 'operador' | 'visor';
+export type InvoiceKind = 'factura' | 'nota_credito' | 'nota_debito';
 
 export interface LocalUser {
   id: string;
@@ -101,16 +103,38 @@ export interface Invoice {
   id: string;
   customerId: string;
   documentType: string;
+  kind: InvoiceKind;
+  relatedInvoiceId?: string;
+  modifiedEncf?: string;
+  reason?: string;
   items: InvoiceItem[];
   totals: InvoiceTotals;
-  status: 'borrador' | 'emitida' | 'rechazada';
+  status: 'borrador' | 'emitida' | 'rechazada' | 'anulada';
   fiscalStatus: 'sin_enviar' | 'precertificacion_ok' | 'precertificacion_error';
   encf?: string;
   trackId?: string;
   securityCode?: string;
   createdAt: string;
   issuedAt?: string;
+  cancelledAt?: string;
   messages: string[];
+}
+
+export interface Purchase {
+  id: string;
+  supplierRnc: string;
+  supplierName: string;
+  ncf: string;
+  date: string;
+  tipoBienesServicios: string;
+  subtotal: number;
+  itbis: number;
+  itbisRetenido?: number;
+  isrRetenido?: number;
+  total: number;
+  paymentMethod: PurchasePaymentMethod;
+  notes?: string;
+  createdAt: string;
 }
 
 export type SaleOrderStatus = 'borrador' | 'confirmada' | 'facturada' | 'cancelada';
@@ -135,7 +159,7 @@ export interface JournalLine {
 
 export interface JournalEntry {
   id: string;
-  source: 'invoice' | 'payment';
+  source: 'invoice' | 'payment' | 'credit_note' | 'debit_note' | 'cancellation' | 'purchase';
   referenceId: string;
   description: string;
   createdAt: string;
@@ -152,6 +176,7 @@ export interface AppData {
   inventoryMovements: InventoryMovement[];
   saleOrders: SaleOrder[];
   journalEntries: JournalEntry[];
+  purchases: Purchase[];
   users: LocalUser[];
 }
 
@@ -186,6 +211,26 @@ export function createDefaultData(): AppData {
         expirationDate: '2026-12-31',
         active: true,
         description: 'Factura de credito fiscal electronica demo',
+      },
+      {
+        id: 'seq-e33-demo',
+        documentType: 'E33',
+        prefix: 'E33',
+        nextNumber: 1,
+        endNumber: 9999999999,
+        expirationDate: '2026-12-31',
+        active: true,
+        description: 'Nota de debito electronica demo',
+      },
+      {
+        id: 'seq-e34-demo',
+        documentType: 'E34',
+        prefix: 'E34',
+        nextNumber: 1,
+        endNumber: 9999999999,
+        expirationDate: '2026-12-31',
+        active: true,
+        description: 'Nota de credito electronica demo',
       },
     ],
     customers: [
@@ -224,6 +269,7 @@ export function createDefaultData(): AppData {
     inventoryMovements: [],
     saleOrders: [],
     journalEntries: [],
+    purchases: [],
     users: [createDefaultAdminUser()],
   };
 }
@@ -268,6 +314,7 @@ export function createInvoice(
     id: createId('factura'),
     customerId: customer.id,
     documentType: normalizeDocumentType(payload.documentType || 'E31'),
+    kind: 'factura',
     items,
     totals: calculateTotals(items),
     status: 'borrador',
@@ -290,7 +337,7 @@ export function issueInvoice(data: AppData, invoiceId: string) {
     return invoice;
   }
 
-  ensureInventoryForInvoice(data, invoice);
+  ensureInvoiceIsIssuable(data, invoice);
   const reservation = reserveFiscalNumber(data, invoice.documentType || 'E31');
 
   invoice.documentType = reservation.documentType;
@@ -300,9 +347,10 @@ export function issueInvoice(data: AppData, invoiceId: string) {
   invoice.issuedAt = new Date().toISOString();
   invoice.trackId = createId('track');
   invoice.securityCode = createSecurityCode(invoice);
-  invoice.messages.push('Factura emitida en ambiente local de precertificacion.');
-  consumeInventoryForInvoice(data, invoice);
-  postInvoiceJournalEntry(data, invoice);
+  invoice.messages.push(
+    `${describeInvoiceKind(invoice)} emitida en ambiente local de precertificacion.`
+  );
+  applyIssueSideEffects(data, invoice);
 
   return invoice;
 }
@@ -331,7 +379,7 @@ export function issueInvoiceWithEncf(
     return invoice;
   }
 
-  ensureInventoryForInvoice(data, invoice);
+  ensureInvoiceIsIssuable(data, invoice);
   invoice.encf = encf;
   invoice.documentType = normalizeDocumentType(`E${encf.slice(1, 3)}`);
   invoice.status = 'emitida';
@@ -340,8 +388,7 @@ export function issueInvoiceWithEncf(
   invoice.trackId = createId('track');
   invoice.securityCode = createSecurityCode(invoice);
   invoice.messages.push('e-NCF recibido desde Odoo y usado para el XML firmado.');
-  consumeInventoryForInvoice(data, invoice);
-  postInvoiceJournalEntry(data, invoice);
+  applyIssueSideEffects(data, invoice);
 
   return invoice;
 }
@@ -358,6 +405,10 @@ export function recordPayment(
 
   if (invoice.status !== 'emitida') {
     throw new Error('Solo se pueden registrar cobros a facturas emitidas');
+  }
+
+  if ((invoice.kind || 'factura') === 'nota_credito') {
+    throw new Error('No se pueden registrar cobros a una nota de credito');
   }
 
   const amount = roundMoney(Number(payload.amount));
@@ -619,20 +670,269 @@ export function getInvoicePaidAmount(data: AppData, invoice: Invoice) {
   );
 }
 
+export function getInvoiceCreditNotes(data: AppData, invoice: Invoice) {
+  return data.invoices.filter(
+    (item) => item.kind === 'nota_credito' && item.relatedInvoiceId === invoice.id
+  );
+}
+
+export function getInvoiceCreditedAmount(data: AppData, invoice: Invoice) {
+  return roundMoney(
+    getInvoiceCreditNotes(data, invoice)
+      .filter((note) => note.status === 'emitida')
+      .reduce((total, note) => total + note.totals.total, 0)
+  );
+}
+
 export function getInvoiceBalance(data: AppData, invoice: Invoice) {
-  return roundMoney(Math.max(invoice.totals.total - getInvoicePaidAmount(data, invoice), 0));
+  return roundMoney(
+    Math.max(
+      invoice.totals.total -
+        getInvoicePaidAmount(data, invoice) -
+        getInvoiceCreditedAmount(data, invoice),
+      0
+    )
+  );
 }
 
 export function getInvoicePaymentStatus(
   data: AppData,
   invoice: Invoice
 ): PaymentStatus {
-  const paidAmount = getInvoicePaidAmount(data, invoice);
-  if (paidAmount <= 0) {
+  const coveredAmount = roundMoney(
+    getInvoicePaidAmount(data, invoice) + getInvoiceCreditedAmount(data, invoice)
+  );
+  if (coveredAmount <= 0) {
     return 'pendiente';
   }
 
-  return paidAmount >= invoice.totals.total ? 'pagada' : 'parcial';
+  return coveredAmount >= invoice.totals.total ? 'pagada' : 'parcial';
+}
+
+export function createCreditNote(
+  data: AppData,
+  payload: { invoiceId: string; items?: Array<Partial<InvoiceItem>>; reason?: string }
+): Invoice {
+  const original = findOriginalInvoiceForNote(data, payload.invoiceId, 'nota de credito');
+  const reason = String(payload.reason || '').trim();
+  if (!reason) {
+    throw new Error('Debe indicar el motivo de la nota de credito');
+  }
+
+  const items = normalizeCreditNoteItems(original, payload.items);
+  validateCreditNoteQuantities(data, original, items);
+
+  const note: Invoice = {
+    id: createId('nota-credito'),
+    customerId: original.customerId,
+    documentType: resolveCreditNoteDocumentType(original.documentType),
+    kind: 'nota_credito',
+    relatedInvoiceId: original.id,
+    modifiedEncf: original.encf,
+    reason,
+    items,
+    totals: calculateTotals(items),
+    status: 'borrador',
+    fiscalStatus: 'sin_enviar',
+    createdAt: new Date().toISOString(),
+    messages: [
+      `Nota de credito creada en borrador sobre la factura ${original.encf}. Motivo: ${reason}.`,
+    ],
+  };
+
+  data.invoices.unshift(note);
+  original.messages.push(`Nota de credito ${note.id} creada. Motivo: ${reason}.`);
+  return note;
+}
+
+export function createDebitNote(
+  data: AppData,
+  payload: { invoiceId: string; items?: Array<Partial<InvoiceItem>>; reason?: string }
+): Invoice {
+  const original = findOriginalInvoiceForNote(data, payload.invoiceId, 'nota de debito');
+  const reason = String(payload.reason || '').trim();
+  if (!reason) {
+    throw new Error('Debe indicar el motivo de la nota de debito');
+  }
+
+  if (!Array.isArray(payload.items) || !payload.items.length) {
+    throw new Error('La nota de debito debe incluir al menos una linea');
+  }
+
+  const items = payload.items.map((item) => normalizeInvoiceItem(data, item));
+
+  const note: Invoice = {
+    id: createId('nota-debito'),
+    customerId: original.customerId,
+    documentType: resolveDebitNoteDocumentType(original.documentType),
+    kind: 'nota_debito',
+    relatedInvoiceId: original.id,
+    modifiedEncf: original.encf,
+    reason,
+    items,
+    totals: calculateTotals(items),
+    status: 'borrador',
+    fiscalStatus: 'sin_enviar',
+    createdAt: new Date().toISOString(),
+    messages: [
+      `Nota de debito creada en borrador sobre la factura ${original.encf}. Motivo: ${reason}.`,
+    ],
+  };
+
+  data.invoices.unshift(note);
+  original.messages.push(`Nota de debito ${note.id} creada. Motivo: ${reason}.`);
+  return note;
+}
+
+export function cancelInvoice(
+  data: AppData,
+  payload: { invoiceId: string; reason?: string }
+): Invoice {
+  const invoice = data.invoices.find((item) => item.id === payload.invoiceId);
+  if (!invoice) {
+    throw new Error('Factura no encontrada');
+  }
+
+  const reason = String(payload.reason || '').trim();
+  if (!reason) {
+    throw new Error('Debe indicar el motivo de la anulacion');
+  }
+
+  if (invoice.status === 'anulada') {
+    return invoice;
+  }
+
+  if (invoice.status === 'borrador') {
+    invoice.status = 'anulada';
+    invoice.cancelledAt = new Date().toISOString();
+    invoice.reason = reason;
+    invoice.messages.push(`Documento en borrador anulado. Motivo: ${reason}.`);
+    return invoice;
+  }
+
+  if (invoice.status !== 'emitida') {
+    throw new Error('Solo se pueden anular documentos en borrador o emitidos');
+  }
+
+  if ((invoice.kind || 'factura') !== 'factura') {
+    throw new Error('Las notas emitidas no se pueden anular directamente');
+  }
+
+  if (getInvoicePayments(data, invoice).length > 0) {
+    throw new Error(
+      'La factura tiene cobros registrados; para revertirla use una nota de credito'
+    );
+  }
+
+  if (getInvoiceCreditNotes(data, invoice).some((note) => note.status === 'emitida')) {
+    throw new Error(
+      'La factura tiene notas de credito emitidas vinculadas; no se puede anular'
+    );
+  }
+
+  invoice.status = 'anulada';
+  invoice.cancelledAt = new Date().toISOString();
+  invoice.reason = reason;
+  invoice.messages.push(
+    `Factura anulada. Motivo: ${reason}. El e-NCF ${invoice.encf} queda registrado para el reporte 608.`
+  );
+  postCancellationJournalEntry(data, invoice);
+  restoreInventoryForInvoice(
+    data,
+    invoice,
+    `Reingreso por anulacion de factura ${invoice.encf || invoice.id}`
+  );
+
+  return invoice;
+}
+
+export function createPurchase(
+  data: AppData,
+  payload: {
+    supplierRnc?: string;
+    supplierName?: string;
+    ncf?: string;
+    date?: string;
+    tipoBienesServicios?: string;
+    subtotal?: number;
+    itbis?: number;
+    itbisRetenido?: number;
+    isrRetenido?: number;
+    total?: number;
+    paymentMethod?: string;
+    notes?: string;
+  }
+): Purchase {
+  const supplierRnc = String(payload.supplierRnc || '').replace(/\D/g, '');
+  if (!/^(\d{9}|\d{11})$/.test(supplierRnc)) {
+    throw new Error('El RNC o cedula del suplidor debe tener 9 u 11 digitos numericos');
+  }
+
+  const supplierName = String(payload.supplierName || '').trim();
+  if (!supplierName) {
+    throw new Error('El nombre del suplidor es requerido');
+  }
+
+  const ncf = String(payload.ncf || '').trim().toUpperCase();
+  if (!ncf) {
+    throw new Error('El NCF de la compra es requerido');
+  }
+
+  const date = String(payload.date || new Date().toISOString().slice(0, 10)).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error('La fecha de la compra debe tener formato YYYY-MM-DD');
+  }
+
+  const tipoBienesServicios = normalizeTipoBienesServicios(payload.tipoBienesServicios);
+
+  const subtotal = roundMoney(Number(payload.subtotal));
+  if (!Number.isFinite(subtotal) || subtotal <= 0) {
+    throw new Error('El subtotal de la compra debe ser mayor que cero');
+  }
+
+  const itbis = roundMoney(Number(payload.itbis ?? 0));
+  if (!Number.isFinite(itbis) || itbis < 0) {
+    throw new Error('El ITBIS de la compra debe ser mayor o igual que cero');
+  }
+
+  const expectedTotal = roundMoney(subtotal + itbis);
+  const total =
+    payload.total === undefined || payload.total === null
+      ? expectedTotal
+      : roundMoney(Number(payload.total));
+  if (!Number.isFinite(total) || total !== expectedTotal) {
+    throw new Error('El total de la compra debe ser igual a subtotal + ITBIS');
+  }
+
+  const itbisRetenido = normalizeOptionalAmount(
+    payload.itbisRetenido,
+    'El ITBIS retenido debe ser un monto mayor o igual que cero'
+  );
+  const isrRetenido = normalizeOptionalAmount(
+    payload.isrRetenido,
+    'El ISR retenido debe ser un monto mayor o igual que cero'
+  );
+
+  const purchase: Purchase = {
+    id: createId('compra'),
+    supplierRnc,
+    supplierName,
+    ncf,
+    date,
+    tipoBienesServicios,
+    subtotal,
+    itbis,
+    itbisRetenido,
+    isrRetenido,
+    total,
+    paymentMethod: normalizePurchasePaymentMethod(payload.paymentMethod),
+    notes: payload.notes ? String(payload.notes).trim() : undefined,
+    createdAt: new Date().toISOString(),
+  };
+
+  data.purchases.unshift(purchase);
+  postPurchaseJournalEntry(data, purchase);
+  return purchase;
 }
 
 export function createFiscalSequence(
@@ -764,7 +1064,7 @@ export function buildEcfXml(data: AppData, invoice: Invoice) {
       <MontoGravadoTotal>${formatMoney(invoice.totals.subtotal)}</MontoGravadoTotal>
       <TotalITBIS>${formatMoney(invoice.totals.itbis)}</TotalITBIS>
       <MontoTotal>${formatMoney(invoice.totals.total)}</MontoTotal>
-    </Totales>
+    </Totales>${buildReferenceXml(data, invoice)}
   </Encabezado>
   <DetallesItems>${lines}
   </DetallesItems>
@@ -774,6 +1074,25 @@ export function buildEcfXml(data: AppData, invoice: Invoice) {
   <RNCEmisor>${escapeXml(data.company.rnc)}</RNCEmisor>
   <RNCComprador>${escapeXml(customer.rnc)}</RNCComprador>
 </ECF>`;
+}
+
+function buildReferenceXml(data: AppData, invoice: Invoice) {
+  const kind = invoice.kind || 'factura';
+  if (kind === 'factura' || !invoice.modifiedEncf) {
+    return '';
+  }
+
+  const original = data.invoices.find((item) => item.id === invoice.relatedInvoiceId);
+  const referenceDate = formatDate(
+    original?.issuedAt || original?.createdAt || invoice.createdAt
+  );
+
+  return `
+    <InformacionReferencia>
+      <NCFModificado>${escapeXml(invoice.modifiedEncf)}</NCFModificado>
+      <FechaNCFModificado>${referenceDate}</FechaNCFModificado>
+      <CodigoModificacion>3</CodigoModificacion>
+    </InformacionReferencia>`;
 }
 
 export function buildCommercialApprovalXml(data: AppData, invoice: Invoice) {
@@ -887,6 +1206,228 @@ function consumeInventoryForInvoice(data: AppData, invoice: Invoice) {
   }
 }
 
+function restoreInventoryForInvoice(data: AppData, invoice: Invoice, reason: string) {
+  for (const item of invoice.items) {
+    const product = data.products.find((candidate) => candidate.id === item.productId);
+    if (!product?.trackInventory) {
+      continue;
+    }
+
+    recordInventoryMovement(data, {
+      productId: product.id,
+      type: 'entrada',
+      quantity: item.cantidad,
+      reason,
+      referenceId: invoice.id,
+    });
+  }
+}
+
+function ensureInvoiceIsIssuable(data: AppData, invoice: Invoice) {
+  if (invoice.status === 'anulada') {
+    throw new Error('No se puede emitir un documento anulado');
+  }
+
+  const kind = invoice.kind || 'factura';
+  if (kind === 'factura') {
+    ensureInventoryForInvoice(data, invoice);
+    return;
+  }
+
+  if (invoice.relatedInvoiceId) {
+    const original = data.invoices.find((item) => item.id === invoice.relatedInvoiceId);
+    if (original && original.status === 'anulada') {
+      throw new Error('La factura original de la nota esta anulada');
+    }
+  }
+}
+
+function applyIssueSideEffects(data: AppData, invoice: Invoice) {
+  const kind = invoice.kind || 'factura';
+
+  if (kind === 'factura') {
+    consumeInventoryForInvoice(data, invoice);
+    postInvoiceJournalEntry(data, invoice);
+    return;
+  }
+
+  if (kind === 'nota_credito') {
+    restoreInventoryForInvoice(
+      data,
+      invoice,
+      `Reingreso por nota de credito ${invoice.encf || invoice.id}`
+    );
+    postCreditNoteJournalEntry(data, invoice);
+    return;
+  }
+
+  postDebitNoteJournalEntry(data, invoice);
+}
+
+function describeInvoiceKind(invoice: Invoice) {
+  const kind = invoice.kind || 'factura';
+  if (kind === 'nota_credito') {
+    return 'Nota de credito';
+  }
+  if (kind === 'nota_debito') {
+    return 'Nota de debito';
+  }
+  return 'Factura';
+}
+
+function findOriginalInvoiceForNote(data: AppData, invoiceId: string, label: string) {
+  const original = data.invoices.find((item) => item.id === invoiceId);
+  if (!original) {
+    throw new Error('Factura original no encontrada');
+  }
+
+  if ((original.kind || 'factura') !== 'factura') {
+    throw new Error(`Solo se puede crear una ${label} sobre una factura`);
+  }
+
+  if (original.status !== 'emitida' || !original.encf) {
+    throw new Error(`La factura original debe estar emitida con e-NCF para crear una ${label}`);
+  }
+
+  return original;
+}
+
+function normalizeCreditNoteItems(
+  original: Invoice,
+  items: Array<Partial<InvoiceItem>> | undefined
+): InvoiceItem[] {
+  if (!Array.isArray(items) || !items.length) {
+    return original.items.map((item) => ({ ...item }));
+  }
+
+  return items.map((item) => {
+    const originalLine = original.items.find((line) => line.productId === item.productId);
+    if (!originalLine) {
+      throw new Error(
+        `El producto ${item.productId || ''} no pertenece a la factura original`
+      );
+    }
+
+    const cantidad = roundQuantity(Number(item.cantidad ?? originalLine.cantidad));
+    if (!Number.isFinite(cantidad) || cantidad <= 0) {
+      throw new Error('La cantidad acreditada debe ser mayor que cero');
+    }
+
+    return {
+      productId: originalLine.productId,
+      descripcion: originalLine.descripcion,
+      cantidad,
+      precio: originalLine.precio,
+      itbisRate: originalLine.itbisRate,
+    };
+  });
+}
+
+function validateCreditNoteQuantities(
+  data: AppData,
+  original: Invoice,
+  items: InvoiceItem[]
+) {
+  const invoicedByProduct = new Map<string, number>();
+  for (const line of original.items) {
+    invoicedByProduct.set(
+      line.productId,
+      roundQuantity((invoicedByProduct.get(line.productId) || 0) + line.cantidad)
+    );
+  }
+
+  const creditedByProduct = new Map<string, number>();
+  for (const note of data.invoices) {
+    if (note.kind !== 'nota_credito' || note.relatedInvoiceId !== original.id) {
+      continue;
+    }
+    if (note.status === 'anulada' || note.status === 'rechazada') {
+      continue;
+    }
+    for (const line of note.items) {
+      creditedByProduct.set(
+        line.productId,
+        roundQuantity((creditedByProduct.get(line.productId) || 0) + line.cantidad)
+      );
+    }
+  }
+
+  const requestedByProduct = new Map<string, number>();
+  for (const line of items) {
+    requestedByProduct.set(
+      line.productId,
+      roundQuantity((requestedByProduct.get(line.productId) || 0) + line.cantidad)
+    );
+  }
+
+  for (const [productId, requested] of requestedByProduct.entries()) {
+    const invoiced = invoicedByProduct.get(productId) || 0;
+    const credited = creditedByProduct.get(productId) || 0;
+    if (roundQuantity(credited + requested) > invoiced) {
+      throw new Error(
+        `Las cantidades acreditadas exceden lo facturado para el producto ${productId}`
+      );
+    }
+  }
+}
+
+function resolveCreditNoteDocumentType(originalDocumentType: string) {
+  const normalized = String(originalDocumentType || '').trim().toUpperCase();
+  if (normalized === 'B01' || normalized === 'B02') {
+    return 'B04';
+  }
+  return 'E34';
+}
+
+function resolveDebitNoteDocumentType(originalDocumentType: string) {
+  const normalized = String(originalDocumentType || '').trim().toUpperCase();
+  if (normalized === 'B01' || normalized === 'B02') {
+    return 'B03';
+  }
+  return 'E33';
+}
+
+function normalizeTipoBienesServicios(value: string | undefined) {
+  const raw = String(value ?? '').trim();
+  const normalized = (raw || '09').padStart(2, '0');
+  const numeric = Number(normalized);
+  if (!/^\d{2}$/.test(normalized) || !Number.isInteger(numeric) || numeric < 1 || numeric > 11) {
+    throw new Error('El tipo de bienes y servicios debe ser un codigo entre 01 y 11');
+  }
+  return normalized;
+}
+
+function normalizePurchasePaymentMethod(value: string | undefined): PurchasePaymentMethod {
+  const normalized = String(value || 'efectivo').trim().toLowerCase();
+  const allowed: PurchasePaymentMethod[] = [
+    'efectivo',
+    'tarjeta',
+    'transferencia',
+    'cheque',
+    'credito',
+    'otro',
+  ];
+
+  if (allowed.includes(normalized as PurchasePaymentMethod)) {
+    return normalized as PurchasePaymentMethod;
+  }
+
+  return 'otro';
+}
+
+function normalizeOptionalAmount(value: unknown, message: string) {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  const amount = roundMoney(Number(value));
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error(message);
+  }
+
+  return amount;
+}
+
 function postInvoiceJournalEntry(data: AppData, invoice: Invoice) {
   if (data.journalEntries.some((entry) => entry.source === 'invoice' && entry.referenceId === invoice.id)) {
     return;
@@ -905,6 +1446,112 @@ function postInvoiceJournalEntry(data: AppData, invoice: Invoice) {
     source: 'invoice',
     referenceId: invoice.id,
     description: `Factura ${invoice.encf || invoice.id}`,
+    lines,
+  });
+}
+
+function postCreditNoteJournalEntry(data: AppData, note: Invoice) {
+  if (
+    data.journalEntries.some(
+      (entry) => entry.source === 'credit_note' && entry.referenceId === note.id
+    )
+  ) {
+    return;
+  }
+
+  const lines: JournalLine[] = [
+    { account: 'Ingresos por ventas', debit: note.totals.subtotal, credit: 0 },
+  ];
+
+  if (note.totals.itbis > 0) {
+    lines.push({ account: 'ITBIS por pagar', debit: note.totals.itbis, credit: 0 });
+  }
+
+  lines.push({ account: 'Cuentas por cobrar', debit: 0, credit: note.totals.total });
+
+  pushBalancedJournalEntry(data, {
+    source: 'credit_note',
+    referenceId: note.id,
+    description: `Nota de credito ${note.encf || note.id} (modifica ${note.modifiedEncf || ''})`,
+    lines,
+  });
+}
+
+function postDebitNoteJournalEntry(data: AppData, note: Invoice) {
+  if (
+    data.journalEntries.some(
+      (entry) => entry.source === 'debit_note' && entry.referenceId === note.id
+    )
+  ) {
+    return;
+  }
+
+  const lines: JournalLine[] = [
+    { account: 'Cuentas por cobrar', debit: note.totals.total, credit: 0 },
+    { account: 'Ingresos por ventas', debit: 0, credit: note.totals.subtotal },
+  ];
+
+  if (note.totals.itbis > 0) {
+    lines.push({ account: 'ITBIS por pagar', debit: 0, credit: note.totals.itbis });
+  }
+
+  pushBalancedJournalEntry(data, {
+    source: 'debit_note',
+    referenceId: note.id,
+    description: `Nota de debito ${note.encf || note.id} (modifica ${note.modifiedEncf || ''})`,
+    lines,
+  });
+}
+
+function postCancellationJournalEntry(data: AppData, invoice: Invoice) {
+  if (
+    data.journalEntries.some(
+      (entry) => entry.source === 'cancellation' && entry.referenceId === invoice.id
+    )
+  ) {
+    return;
+  }
+
+  const lines: JournalLine[] = [
+    { account: 'Ingresos por ventas', debit: invoice.totals.subtotal, credit: 0 },
+  ];
+
+  if (invoice.totals.itbis > 0) {
+    lines.push({ account: 'ITBIS por pagar', debit: invoice.totals.itbis, credit: 0 });
+  }
+
+  lines.push({ account: 'Cuentas por cobrar', debit: 0, credit: invoice.totals.total });
+
+  pushBalancedJournalEntry(data, {
+    source: 'cancellation',
+    referenceId: invoice.id,
+    description: `Anulacion factura ${invoice.encf || invoice.id}`,
+    lines,
+  });
+}
+
+function postPurchaseJournalEntry(data: AppData, purchase: Purchase) {
+  const counterAccount =
+    purchase.paymentMethod === 'efectivo'
+      ? 'Caja'
+      : purchase.paymentMethod === 'credito'
+        ? 'Cuentas por pagar'
+        : 'Banco';
+
+  const lines: JournalLine[] = [
+    { account: 'Compras y gastos', debit: purchase.subtotal, credit: 0 },
+  ];
+
+  if (purchase.itbis > 0) {
+    lines.push({ account: 'ITBIS adelantado', debit: purchase.itbis, credit: 0 });
+  }
+
+  lines.push({ account: counterAccount, debit: 0, credit: purchase.total });
+
+  pushBalancedJournalEntry(data, {
+    source: 'purchase',
+    referenceId: purchase.id,
+    description: `Compra ${purchase.ncf} de ${purchase.supplierName}`,
     lines,
   });
 }

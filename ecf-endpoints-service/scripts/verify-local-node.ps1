@@ -14,7 +14,8 @@ function Invoke-Json {
     param(
         [string]$Method = 'GET',
         [string]$Path,
-        [object]$Body = $null
+        [object]$Body = $null,
+        [string]$Token = ''
     )
 
     $params = @{
@@ -27,6 +28,10 @@ function Invoke-Json {
     if ($null -ne $Body) {
         $params.ContentType = 'application/json'
         $params.Body = ($Body | ConvertTo-Json -Depth 20)
+    }
+
+    if ($Token) {
+        $params.Headers = @{ Authorization = "Bearer $Token" }
     }
 
     $response = Invoke-WebRequest @params
@@ -45,9 +50,7 @@ function Stop-StartedProcess {
 
 Push-Location $projectRoot
 try {
-    if (-not (Test-Path 'dist\server.js')) {
-        npm run build
-    }
+    npm.cmd run build
 
     if (Test-Path $storageRoot) {
         Remove-Item -LiteralPath $storageRoot -Recurse -Force
@@ -85,12 +88,36 @@ try {
         throw 'El servicio Node local no respondio /health.'
     }
 
-    $dashboard = Invoke-Json -Path '/api/dashboard'
+    $login = Invoke-Json -Method 'POST' -Path '/api/auth/login' -Body @{
+        username = 'admin'
+        password = 'admin123'
+    }
+    $token = $login.token
+    if (-not $token) {
+        throw 'No se pudo obtener token de sesion local.'
+    }
+
+    if ($login.user.mustChangePassword) {
+        $changed = Invoke-Json -Method 'POST' -Path '/api/auth/change-password' -Token $token -Body @{
+            currentPassword = 'admin123'
+            newPassword = 'admin12345'
+        }
+        if ($changed.user.mustChangePassword) {
+            throw 'La clave inicial no pudo actualizarse.'
+        }
+        $relogin = Invoke-Json -Method 'POST' -Path '/api/auth/login' -Body @{
+            username = 'admin'
+            password = 'admin12345'
+        }
+        $token = $relogin.token
+    }
+
+    $dashboard = Invoke-Json -Path '/api/dashboard' -Token $token
     if (-not $dashboard.customers -or -not $dashboard.products) {
         throw 'Dashboard sin cliente/producto demo.'
     }
 
-    $sequence = Invoke-Json -Method 'POST' -Path '/api/fiscal-sequences' -Body @{
+    $sequence = Invoke-Json -Method 'POST' -Path '/api/fiscal-sequences' -Token $token -Body @{
         documentType = 'E32'
         prefix = 'E32'
         nextNumber = 1
@@ -102,13 +129,13 @@ try {
         throw 'No se pudo crear la secuencia fiscal E32 en Node.'
     }
 
-    $invoice = Invoke-Json -Method 'POST' -Path '/api/invoices' -Body @{
+    $invoice = Invoke-Json -Method 'POST' -Path '/api/invoices' -Token $token -Body @{
         customerId = $dashboard.customers[0].id
         documentType = 'E32'
         items = @(@{ productId = $dashboard.products[0].id; cantidad = 1 })
     }
 
-    $issued = Invoke-Json -Method 'POST' -Path "/api/invoices/$($invoice.id)/issue-ecf" -Body @{}
+    $issued = Invoke-Json -Method 'POST' -Path "/api/invoices/$($invoice.id)/issue-ecf" -Token $token -Body @{}
     if (-not ($issued.invoice.encf -like 'E32*')) {
         throw 'La factura emitida no genero e-NCF E32 desde la secuencia Node.'
     }
@@ -116,7 +143,7 @@ try {
         throw 'El XML e-CF no fue firmado.'
     }
 
-    $payment = Invoke-Json -Method 'POST' -Path "/api/invoices/$($invoice.id)/payments" -Body @{
+    $payment = Invoke-Json -Method 'POST' -Path "/api/invoices/$($invoice.id)/payments" -Token $token -Body @{
         amount = $issued.invoice.balanceDue
         method = 'transferencia'
         reference = 'verify-local-node'
@@ -125,18 +152,18 @@ try {
         throw 'El cobro local no actualizo el saldo de la factura.'
     }
 
-    $accounting = Invoke-Json -Path '/api/accounting/summary'
+    $accounting = Invoke-Json -Path '/api/accounting/summary' -Token $token
     if (-not $accounting.accounting.balanced -or $accounting.accounting.entries.Count -lt 2) {
         throw 'La contabilidad local no quedo balanceada despues de emitir y cobrar.'
     }
 
-    $tests = Invoke-Json -Method 'POST' -Path '/api/precertification/run' -Body @{}
+    $tests = Invoke-Json -Method 'POST' -Path '/api/precertification/run' -Token $token -Body @{}
     $failed = @($tests.results | Where-Object { -not $_.ok -and $_.name -ne 'URLs HTTPS para DGII' })
     if ($failed.Count -gt 0) {
         throw ('Pruebas de precertificacion fallaron: ' + (($failed | ForEach-Object { $_.name }) -join ', '))
     }
 
-    $runtime = Invoke-Json -Path '/api/runtime/status'
+    $runtime = Invoke-Json -Path '/api/runtime/status' -Token $token
     $processInfo = Get-Process -Id $process.Id
 
     [pscustomobject]@{

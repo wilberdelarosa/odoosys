@@ -19,11 +19,15 @@ import {
   AppData,
   buildCommercialApprovalXml,
   buildEcfXml,
+  cancelInvoice,
   changeLocalUserPassword,
+  createCreditNote,
+  createDebitNote,
   createFiscalSequence,
   createDefaultData,
   createId,
   createInvoice,
+  createPurchase,
   createSaleOrder,
   authenticateLocalUser,
   Customer,
@@ -31,6 +35,7 @@ import {
   getAccountingSummary,
   getInventorySummary,
   getInvoiceBalance,
+  getInvoiceCreditedAmount,
   getInvoiceCustomer,
   getInvoicePaidAmount,
   getInvoicePaymentStatus,
@@ -48,16 +53,45 @@ import {
   UserRole,
   validateCompanyReadiness,
 } from './lib/facturador.js';
+import {
+  build606,
+  build607,
+  build608,
+  buildPeriodSummary,
+  to606Text,
+  to607Text,
+  to608Text,
+  toCsv,
+} from './lib/dgii-reports.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.disable('x-powered-by');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+app.use((_req, res, next) => {
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "base-uri 'none'",
+    "connect-src 'self'",
+    "font-src 'self' data:",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "img-src 'self' data:",
+    "object-src 'none'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+  ].join('; '));
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
 app.use(express.json());
 app.use((req, res, next) => {
   const allowedOrigin = getAllowedCorsOrigin(req.headers.origin);
@@ -106,7 +140,10 @@ const config = {
   demoCertPassword: process.env.DEMO_CERT_PASSWORD || 'demo123',
   authEnabled: (process.env.AUTH_ENABLED || 'true') === 'true',
   authTokenHours: Number(process.env.AUTH_TOKEN_HOURS || '12'),
+  backupRetention: Math.max(1, Number(process.env.BACKUP_RETENTION || '20')),
 };
+
+const loginAttempts = new Map<string, { failures: number; firstFailureAt: number; blockedUntil: number }>();
 
 const endpointPaths = {
   seed: '/fe/autenticacion/api/semilla',
@@ -144,8 +181,16 @@ async function bootstrap() {
   });
 
   app.post('/api/auth/login', async (req, res, next) => {
+    const loginKey = getLoginAttemptKey(req);
+    const blockedForMs = getLoginBlockRemaining(loginKey);
+    if (blockedForMs > 0) {
+      res.setHeader('Retry-After', String(Math.ceil(blockedForMs / 1000)));
+      return res.status(429).json({ error: 'Demasiados intentos. Intente nuevamente en unos segundos.' });
+    }
+
     try {
       const user = authenticateLocalUser(appData, req.body || {});
+      loginAttempts.delete(loginKey);
       await saveAppData(appData);
       res.json({
         ok: true,
@@ -153,6 +198,7 @@ async function bootstrap() {
         user: sanitizeLocalUser(user),
       });
     } catch (error) {
+      registerLoginFailure(loginKey);
       next(error);
     }
   });
@@ -711,6 +757,7 @@ async function bootstrap() {
         appData.inventoryMovements = [];
         appData.saleOrders = [];
         appData.journalEntries = [];
+        appData.purchases = [];
         
         recordAudit({
           event: 'preset_loaded',
@@ -1055,6 +1102,197 @@ async function bootstrap() {
         ok: true,
         payment,
         invoice: enrichInvoice(appData, invoice),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/invoices/:id/credit-note', requireAuth('operador'), async (req, res, next) => {
+    try {
+      const note = createCreditNote(appData, {
+        invoiceId: String(req.params.id),
+        items: Array.isArray(req.body?.items) ? req.body.items : undefined,
+        reason: req.body?.reason,
+      });
+      await saveAppData(appData);
+
+      recordAudit({
+        event: 'credit_note_created',
+        outcome: 'ok',
+        source: 'local-ui',
+        encf: note.modifiedEncf,
+        amount: note.totals?.total,
+        message: `Nota de credito creada sobre la factura ${note.modifiedEncf}`,
+        detail: {
+          creditNoteId: note.id,
+          invoiceId: note.relatedInvoiceId,
+          reason: note.reason,
+        },
+      });
+
+      res.status(201).json({
+        ok: true,
+        creditNote: enrichInvoice(appData, note),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/invoices/:id/debit-note', requireAuth('operador'), async (req, res, next) => {
+    try {
+      const note = createDebitNote(appData, {
+        invoiceId: String(req.params.id),
+        items: Array.isArray(req.body?.items) ? req.body.items : undefined,
+        reason: req.body?.reason,
+      });
+      await saveAppData(appData);
+
+      recordAudit({
+        event: 'debit_note_created',
+        outcome: 'ok',
+        source: 'local-ui',
+        encf: note.modifiedEncf,
+        amount: note.totals?.total,
+        message: `Nota de debito creada sobre la factura ${note.modifiedEncf}`,
+        detail: {
+          debitNoteId: note.id,
+          invoiceId: note.relatedInvoiceId,
+          reason: note.reason,
+        },
+      });
+
+      res.status(201).json({
+        ok: true,
+        debitNote: enrichInvoice(appData, note),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/invoices/:id/cancel', requireAuth('admin'), async (req, res, next) => {
+    try {
+      const invoice = cancelInvoice(appData, {
+        invoiceId: String(req.params.id),
+        reason: req.body?.reason,
+      });
+      await saveAppData(appData);
+
+      recordAudit({
+        event: 'invoice_cancelled',
+        outcome: 'ok',
+        source: 'local-ui',
+        encf: invoice.encf,
+        amount: invoice.totals?.total,
+        message: `Factura anulada. Motivo: ${invoice.reason || ''}`,
+        detail: {
+          invoiceId: invoice.id,
+          cancelledAt: invoice.cancelledAt,
+        },
+      });
+
+      res.json({
+        ok: true,
+        invoice: enrichInvoice(appData, invoice),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/purchases', requireAuth('visor'), (_req, res) => {
+    res.json({
+      ok: true,
+      purchases: appData.purchases,
+    });
+  });
+
+  app.post('/api/purchases', requireAuth('operador'), async (req, res, next) => {
+    try {
+      const purchase = createPurchase(appData, req.body || {});
+      await saveAppData(appData);
+
+      recordAudit({
+        event: 'purchase_recorded',
+        outcome: 'ok',
+        source: 'local-ui',
+        amount: purchase.total,
+        customerRnc: purchase.supplierRnc,
+        message: `Compra ${purchase.ncf} registrada de ${purchase.supplierName}`,
+        detail: {
+          purchaseId: purchase.id,
+          paymentMethod: purchase.paymentMethod,
+          tipoBienesServicios: purchase.tipoBienesServicios,
+        },
+      });
+
+      res.status(201).json({
+        ok: true,
+        purchase,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const handleDgiiReport =
+    (reportType: '606' | '607' | '608') =>
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      try {
+        const { from, to } = parseReportRange(req);
+        const format = String(req.query.format || 'json').trim().toLowerCase();
+        if (format !== 'json' && format !== 'txt' && format !== 'csv') {
+          throw new Error('El formato del reporte debe ser json, txt o csv');
+        }
+
+        const built = (() => {
+          if (reportType === '606') {
+            const report = build606(appData, from, to);
+            return { report, text: to606Text(appData, report, from), rows: report.rows as object[] };
+          }
+          if (reportType === '607') {
+            const report = build607(appData, from, to);
+            return { report, text: to607Text(appData, report, from), rows: report.rows as object[] };
+          }
+          const report = build608(appData, from, to);
+          return { report, text: to608Text(appData, report, from), rows: report.rows as object[] };
+        })();
+
+        if (format === 'json') {
+          return res.json({
+            ok: true,
+            reportType,
+            from,
+            to,
+            report: built.report,
+          });
+        }
+
+        const period = from.slice(0, 7).replace('-', '');
+        const fileName = `${reportType}_${appData.company.rnc}_${period}.${format}`;
+        res.setHeader(
+          'Content-Type',
+          format === 'csv' ? 'text/csv; charset=utf-8' : 'text/plain; charset=utf-8'
+        );
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.send(format === 'csv' ? toCsv(built.rows) : built.text);
+      } catch (error) {
+        next(error);
+      }
+    };
+
+  app.get('/api/reports/dgii/606', requireAuth('visor'), handleDgiiReport('606'));
+  app.get('/api/reports/dgii/607', requireAuth('visor'), handleDgiiReport('607'));
+  app.get('/api/reports/dgii/608', requireAuth('visor'), handleDgiiReport('608'));
+
+  app.get('/api/reports/period', requireAuth('visor'), (req, res, next) => {
+    try {
+      const { from, to } = parseReportRange(req);
+      res.json({
+        ok: true,
+        period: buildPeriodSummary(appData, from, to),
       });
     } catch (error) {
       next(error);
@@ -1523,11 +1761,13 @@ async function loadAppData(): Promise<AppData> {
     invoices: (data.invoices || []).map((invoice) => ({
       ...invoice,
       documentType: invoice.documentType || 'E31',
+      kind: invoice.kind || 'factura',
     })),
     payments: data.payments || [],
     inventoryMovements: data.inventoryMovements || [],
     saleOrders: data.saleOrders || [],
     journalEntries: data.journalEntries || [],
+    purchases: data.purchases || [],
     users:
       data.users && data.users.length
         ? data.users.map((user) => ({
@@ -1541,6 +1781,15 @@ async function loadAppData(): Promise<AppData> {
 
 async function saveAppData(data: AppData) {
   latestAppDataSnapshot = data;
+  const serialized = JSON.stringify(data, null, 2);
+  const operation = saveQueue.then(() => persistAppData(serialized));
+  saveQueue = operation.catch(() => undefined);
+  return operation;
+}
+
+let saveQueue: Promise<void> = Promise.resolve();
+
+async function persistAppData(serialized: string) {
   await ensureDirectory(path.dirname(dataFile));
   await ensureDirectory(backupRoot);
 
@@ -1553,9 +1802,36 @@ async function saveAppData(data: AppData) {
     await fs.promises.copyFile(dataFile, `${dataFile}.bak`);
   }
 
-  const tempFile = `${dataFile}.${process.pid}.tmp`;
-  await fs.promises.writeFile(tempFile, JSON.stringify(data, null, 2), 'utf8');
-  await fs.promises.rename(tempFile, dataFile);
+  const tempFile = `${dataFile}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  try {
+    const handle = await fs.promises.open(tempFile, 'w');
+    try {
+      await handle.writeFile(serialized, 'utf8');
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await fs.promises.rename(tempFile, dataFile);
+  } finally {
+    await fs.promises.rm(tempFile, { force: true }).catch(() => undefined);
+  }
+
+  await pruneAutomaticBackups();
+}
+
+async function pruneAutomaticBackups() {
+  const entries = await fs.promises.readdir(backupRoot, { withFileTypes: true });
+  const backups = entries
+    .filter((entry) => entry.isFile() && /^facturador-data-.*\.json$/.test(entry.name))
+    .map((entry) => entry.name)
+    .sort()
+    .reverse();
+
+  await Promise.all(
+    backups.slice(config.backupRetention).map((name) =>
+      fs.promises.rm(path.resolve(backupRoot, name), { force: true })
+    )
+  );
 }
 
 async function readAppDataWithRecovery(): Promise<AppData> {
@@ -1595,6 +1871,7 @@ function enrichInvoice(data: AppData, invoice: Invoice) {
     customer: data.customers.find((item) => item.id === invoice.customerId),
     payments: getInvoicePayments(data, invoice),
     paidAmount: getInvoicePaidAmount(data, invoice),
+    creditedAmount: getInvoiceCreditedAmount(data, invoice),
     balanceDue: getInvoiceBalance(data, invoice),
     paymentStatus: getInvoicePaymentStatus(data, invoice),
   };
@@ -1672,10 +1949,20 @@ function requireAuth(requiredRole: UserRole) {
         sub: string;
         role: UserRole;
         username: string;
+        pwd: string;
       };
       const user = getActiveUserById(claims.sub);
-      if (!user) {
+      if (!user || claims.pwd !== getPasswordFingerprint(user)) {
         return res.status(401).json({ error: 'Sesion invalida' });
+      }
+
+      const passwordChangeRoute = req.path === '/api/auth/change-password';
+      const sessionInfoRoute = req.path === '/api/auth/me';
+      if (user.mustChangePassword && !passwordChangeRoute && !sessionInfoRoute) {
+        return res.status(403).json({
+          error: 'Debe cambiar la contrasena antes de continuar',
+          code: 'PASSWORD_CHANGE_REQUIRED',
+        });
       }
 
       if (!hasRequiredRole(user.role, requiredRole)) {
@@ -1734,6 +2021,7 @@ function signLocalSession(secret: string, user: LocalUser) {
       sub: user.id,
       role: user.role,
       username: user.username,
+      pwd: getPasswordFingerprint(user),
     },
     secret,
     {
@@ -1741,6 +2029,46 @@ function signLocalSession(secret: string, user: LocalUser) {
       expiresIn: `${config.authTokenHours}h`,
     }
   );
+}
+
+function getPasswordFingerprint(user: LocalUser) {
+  return crypto.createHash('sha256').update(user.passwordHash).digest('hex').slice(0, 24);
+}
+
+function getLoginAttemptKey(req: express.Request) {
+  const username = String(req.body?.username || '').trim().toLowerCase();
+  return `${req.socket.remoteAddress || 'local'}:${username}`;
+}
+
+function getLoginBlockRemaining(key: string) {
+  const attempt = loginAttempts.get(key);
+  if (!attempt) {
+    return 0;
+  }
+
+  const now = Date.now();
+  if (attempt.blockedUntil > now) {
+    return attempt.blockedUntil - now;
+  }
+
+  if (now - attempt.firstFailureAt > 5 * 60 * 1000) {
+    loginAttempts.delete(key);
+  }
+  return 0;
+}
+
+function registerLoginFailure(key: string) {
+  const now = Date.now();
+  const previous = loginAttempts.get(key);
+  const attempt = !previous || now - previous.firstFailureAt > 5 * 60 * 1000
+    ? { failures: 0, firstFailureAt: now, blockedUntil: 0 }
+    : previous;
+
+  attempt.failures += 1;
+  if (attempt.failures >= 5) {
+    attempt.blockedUntil = now + 30 * 1000;
+  }
+  loginAttempts.set(key, attempt);
 }
 
 let resolvedAuthSecret = '';
@@ -1823,6 +2151,21 @@ function validateProductPayload(payload: Record<string, unknown>) {
 
 function roundForReport(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function parseReportRange(req: express.Request) {
+  const from = String(req.query.from || '').trim();
+  const to = String(req.query.to || '').trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    throw new Error('Los parametros from y to son obligatorios con formato YYYY-MM-DD');
+  }
+
+  if (from > to) {
+    throw new Error('El parametro from no puede ser mayor que to');
+  }
+
+  return { from, to };
 }
 
 function shouldAutoStart() {
