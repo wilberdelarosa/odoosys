@@ -1,0 +1,19 @@
+# Root temp and local state
+.desktop-node-test/
+*.log
+
+# Node service build/runtime state
+ecf-endpoints-service/node_modules/
+ecf-endpoints-service/dist/
+ecf-endpoints-service/storage/
+ecf-endpoints-service/.local-node-storage/
+ecf-endpoints-service/.system-test-storage/
+ecf-endpoints-service/.tsbuildinfo
+ecf-endpoints-service/.env
+
+# Native/Odoo runtime bundles
+windows-native/runtime/
+
+# Nested repos and generated dependencies
+dgii-ecf-check/node_modules/
+dgii-ecf-check/dist/
