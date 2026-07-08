@@ -5,6 +5,7 @@
 # Node service build/runtime state
 ecf-endpoints-service/node_modules/
 ecf-endpoints-service/dist/
+ecf-endpoints-service/build/
 ecf-endpoints-service/storage/
 ecf-endpoints-service/.local-node-storage/
 ecf-endpoints-service/.system-test-storage/
@@ -22,3 +23,9 @@ dgii-ecf-check/dist/
 desktop-electron/node_modules/
 desktop-electron/release/
 desktop-electron/service/
+
+# Desktop Tauri packaging
+desktop-tauri/node_modules/
+desktop-tauri/src-tauri/binaries/
+desktop-tauri/src-tauri/gen/
+desktop-tauri/src-tauri/target/

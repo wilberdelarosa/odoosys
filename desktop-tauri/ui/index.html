@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DGII e-CF Desktop</title>
+    <style>
+      :root { color-scheme: light; font-family: Georgia, "Times New Roman", serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; color: #16231b; background: radial-gradient(circle at 20% 10%, #e8f0df, transparent 36%), #f7f4ea; }
+      main { width: min(440px, calc(100% - 40px)); padding: 42px; border: 1px solid #cad2c2; background: rgba(255,255,255,.82); box-shadow: 0 24px 70px rgba(32,55,40,.12); }
+      small { font: 700 11px/1.2 ui-monospace, monospace; letter-spacing: .16em; text-transform: uppercase; color: #53705d; }
+      h1 { margin: 12px 0 8px; font-size: 34px; font-weight: 500; }
+      p { margin: 0; color: #657067; font: 14px/1.6 ui-sans-serif, sans-serif; }
+      .bar { height: 3px; margin-top: 28px; overflow: hidden; background: #dce3d7; }
+      .bar::after { content: ""; display: block; width: 42%; height: 100%; background: #276142; animation: load 1.1s ease-in-out infinite alternate; }
+      @keyframes load { to { transform: translateX(138%); } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <small>Runtime local seguro</small>
+      <h1>Preparando facturación</h1>
+      <p>Iniciando la base de datos y los servicios e-CF en este equipo.</p>
+      <div class="bar" aria-label="Cargando"></div>
+    </main>
+  </body>
+</html>

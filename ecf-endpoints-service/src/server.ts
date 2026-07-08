@@ -15,6 +15,7 @@ import P12Reader from './lib/p12-reader.js';
 import Signature from './lib/signature.js';
 import { ReceivedStatus, SenderReceiver } from './lib/sender-receiver.js';
 import { configureAudit, readRecentAudit, recordAudit } from './lib/audit.js';
+import { AppDataStore } from './lib/app-data-store.js';
 import {
   AppData,
   buildCommercialApprovalXml,
@@ -64,8 +65,9 @@ import {
   toCsv,
 } from './lib/dgii-reports.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const runtimeFilename =
+  typeof __filename === 'string' ? __filename : fileURLToPath(import.meta.url);
+const runtimeDirectory = path.dirname(runtimeFilename);
 
 const app = express();
 app.disable('x-powered-by');
@@ -112,7 +114,7 @@ app.use(
   })
 );
 
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(runtimeDirectory, '..');
 const storageRoot = path.resolve(
   process.env.STORAGE_ROOT || path.resolve(projectRoot, 'storage')
 );
@@ -120,6 +122,7 @@ const incomingRoot = path.resolve(storageRoot, 'incoming');
 const outgoingRoot = path.resolve(storageRoot, 'outgoing');
 const backupRoot = path.resolve(storageRoot, 'backups');
 const dataFile = path.resolve(storageRoot, 'facturador-data.json');
+const databaseFile = path.resolve(storageRoot, 'facturador.sqlite');
 const authSecretFile = path.resolve(storageRoot, 'local-auth-secret.txt');
 const publicRoot = path.resolve(projectRoot, 'public');
 
@@ -135,15 +138,24 @@ const config = {
   certPath: process.env.CERT_PATH || '',
   certPassword: process.env.CERT_PASSWORD || '',
   generateDemoCert: (process.env.GENERATE_DEMO_CERT || 'true') === 'true',
-  demoCertPath:
-    process.env.DEMO_CERT_PATH || path.resolve(storageRoot, 'demo-certificate.p12'),
+  demoCertPath: resolveDemoCertificatePath(process.env.DEMO_CERT_PATH),
   demoCertPassword: process.env.DEMO_CERT_PASSWORD || 'demo123',
   authEnabled: (process.env.AUTH_ENABLED || 'true') === 'true',
   authTokenHours: Number(process.env.AUTH_TOKEN_HOURS || '12'),
   backupRetention: Math.max(1, Number(process.env.BACKUP_RETENTION || '20')),
 };
 
+function resolveDemoCertificatePath(configuredPath?: string) {
+  if (!configuredPath) {
+    return path.resolve(storageRoot, 'demo-certificate.p12');
+  }
+  return path.isAbsolute(configuredPath)
+    ? configuredPath
+    : path.resolve(storageRoot, path.basename(configuredPath));
+}
+
 const loginAttempts = new Map<string, { failures: number; firstFailureAt: number; blockedUntil: number }>();
+let appDataStore: AppDataStore<AppData> | null = null;
 
 const endpointPaths = {
   seed: '/fe/autenticacion/api/semilla',
@@ -158,6 +170,12 @@ async function bootstrap() {
   await ensureDirectory(outgoingRoot);
   await ensureDirectory(backupRoot);
   configureAudit(storageRoot);
+  appDataStore = new AppDataStore<AppData>({
+    databaseFile,
+    backupRoot,
+    legacyJsonFile: dataFile,
+    backupRetention: config.backupRetention,
+  });
   const appData = await loadAppData();
   latestAppDataSnapshot = appData;
   const authSecret = await loadOrCreateAuthSecret();
@@ -1714,6 +1732,8 @@ export async function startServer(): Promise<LocalServerHandle> {
               reject(error);
               return;
             }
+            appDataStore?.close();
+            appDataStore = null;
             serverHandlePromise = null;
             resolve();
           });
@@ -1735,22 +1755,20 @@ if (shouldAutoStart()) {
 }
 
 async function loadAppData(): Promise<AppData> {
-  if (!fs.existsSync(dataFile)) {
+  const storedData = getAppDataStore().load();
+  if (!storedData) {
     const defaultData = createDefaultData();
     await saveAppData(defaultData);
     return defaultData;
   }
 
-  const data = await readAppDataWithRecovery();
+  const data = storedData;
   const defaults = createDefaultData();
   return {
     ...defaults,
     ...data,
     company: { ...defaults.company, ...data.company },
-    fiscalSequences:
-      data.fiscalSequences && data.fiscalSequences.length
-        ? data.fiscalSequences
-        : defaults.fiscalSequences,
+    fiscalSequences: mergeFiscalSequences(data.fiscalSequences, defaults.fiscalSequences),
     customers: data.customers || [],
     products: (data.products || []).map((product) => ({
       ...product,
@@ -1787,73 +1805,34 @@ async function saveAppData(data: AppData) {
   return operation;
 }
 
+function mergeFiscalSequences(
+  storedSequences: AppData['fiscalSequences'] | undefined,
+  defaultSequences: AppData['fiscalSequences']
+) {
+  const sequences = storedSequences?.length ? [...storedSequences] : [];
+  const configuredTypes = new Set(sequences.map((sequence) => sequence.documentType));
+  for (const sequence of defaultSequences) {
+    if (!configuredTypes.has(sequence.documentType)) {
+      sequences.push(sequence);
+    }
+  }
+  return sequences;
+}
+
 let saveQueue: Promise<void> = Promise.resolve();
 
 async function persistAppData(serialized: string) {
-  await ensureDirectory(path.dirname(dataFile));
-  await ensureDirectory(backupRoot);
-
-  if (fs.existsSync(dataFile)) {
-    const backupFile = path.resolve(
-      backupRoot,
-      `facturador-data-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
-    );
-    await fs.promises.copyFile(dataFile, backupFile);
-    await fs.promises.copyFile(dataFile, `${dataFile}.bak`);
-  }
-
-  const tempFile = `${dataFile}.${process.pid}.${crypto.randomUUID()}.tmp`;
-  try {
-    const handle = await fs.promises.open(tempFile, 'w');
-    try {
-      await handle.writeFile(serialized, 'utf8');
-      await handle.sync();
-    } finally {
-      await handle.close();
-    }
-    await fs.promises.rename(tempFile, dataFile);
-  } finally {
-    await fs.promises.rm(tempFile, { force: true }).catch(() => undefined);
-  }
-
-  await pruneAutomaticBackups();
+  const data = JSON.parse(serialized) as AppData;
+  const store = getAppDataStore();
+  store.save(data);
+  await store.createBackup();
 }
 
-async function pruneAutomaticBackups() {
-  const entries = await fs.promises.readdir(backupRoot, { withFileTypes: true });
-  const backups = entries
-    .filter((entry) => entry.isFile() && /^facturador-data-.*\.json$/.test(entry.name))
-    .map((entry) => entry.name)
-    .sort()
-    .reverse();
-
-  await Promise.all(
-    backups.slice(config.backupRetention).map((name) =>
-      fs.promises.rm(path.resolve(backupRoot, name), { force: true })
-    )
-  );
-}
-
-async function readAppDataWithRecovery(): Promise<AppData> {
-  try {
-    const raw = await fs.promises.readFile(dataFile, 'utf8');
-    return JSON.parse(raw) as AppData;
-  } catch (error) {
-    const backupFile = `${dataFile}.bak`;
-    if (fs.existsSync(backupFile)) {
-      const raw = await fs.promises.readFile(backupFile, 'utf8');
-      const recovered = JSON.parse(raw) as AppData;
-      recordAudit({
-        event: 'storage_recovered',
-        outcome: 'ok',
-        source: 'local-storage',
-        message: 'facturador-data.json fue recuperado desde backup .bak',
-      });
-      return recovered;
-    }
-
-    throw error;
+function getAppDataStore() {
+  if (!appDataStore) {
+    throw new Error('La base de datos local no esta inicializada');
   }
+  return appDataStore;
 }
 
 function findInvoice(data: AppData, invoiceId: string) {
@@ -2174,7 +2153,7 @@ function shouldAutoStart() {
     return false;
   }
 
-  return path.resolve(entryPoint) === __filename;
+  return path.resolve(entryPoint) === runtimeFilename;
 }
 
 function upsertCustomerFromExternal(data: AppData, payload: Record<string, unknown>) {

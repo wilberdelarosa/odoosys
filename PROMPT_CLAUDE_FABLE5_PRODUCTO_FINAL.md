@@ -11,12 +11,13 @@ Tu misión es convertir la aplicación existente en un producto comercial de fac
 El producto actual reemplaza una parte del flujo de facturación de Odoo por una aplicación local y autónoma:
 
 - Backend principal: `ecf-endpoints-service` (Node.js, TypeScript y Express).
-- Aplicación de escritorio: `desktop-electron` (Electron y electron-builder).
+- Aplicación de escritorio principal: `desktop-tauri` (Tauri 2, WebView2 y sidecar autónomo).
+- Empaquetado anterior conservado como referencia: `desktop-electron`.
 - Launcher alternativo: `desktop-node-local`.
 - No necesita Docker, Odoo ni PostgreSQL para funcionar localmente.
 - Genera instalador NSIS y ejecutable portable para Windows x64.
 - Versión desktop actual: `1.1.0`.
-- Persistencia actual basada principalmente en JSON con escritura atómica y backup.
+- Persistencia principal SQLite transaccional con migración automática del JSON anterior, backups en línea y recuperación por corrupción.
 - El almacenamiento de la aplicación instalada vive en `%APPDATA%`.
 
 Ya existen, al menos, estas funciones:
@@ -33,7 +34,7 @@ Ya existen, al menos, estas funciones:
 - Compras.
 - Reportes DGII 606, 607 y 608, resumen por período y exportación de archivos.
 - Firma/XML y endpoints relacionados con e-CF que deben revisarse contra las reglas oficiales vigentes.
-- Pruebas de sistema y smoke tests de la aplicación Electron.
+- Pruebas de sistema y smoke tests reproducibles del runtime Tauri y del instalador NSIS.
 
 Los builds actuales están en `desktop-electron\release`. El instalador y el portable 1.1.0 ya fueron ejecutados con éxito. Hay cambios sin consolidar en el repositorio; no los descartes ni los sobrescribas a ciegas. Revisa `git status`, el historial, `HANDOFF_PROMPT.md` y los diffs antes de editar.
 
@@ -49,7 +50,7 @@ El resultado debe sentirse como un producto premium moderno, no como un panel ad
 2. Ejecuta la batería actual para obtener una línea base. Registra tiempos de arranque, consumo de memoria, tamaño del instalador, tiempo de operaciones importantes y resultados de pruebas.
 3. Produce un plan priorizado por riesgo y valor. Después comienza a implementarlo; no te detengas únicamente en el análisis.
 4. Trabaja en fases pequeñas y verificables. Después de cada fase ejecuta pruebas relevantes y corrige cualquier regresión antes de continuar.
-5. No reemplaces Electron, Express, el frontend o el almacenamiento por moda. Si propones Tauri, SQLite, Preact, Lit, React u otra tecnología, primero compara costo de migración, peso, rendimiento, seguridad, mantenibilidad y compatibilidad. Implementa la opción que pueda demostrarse mejor para este producto.
+5. Conserva Tauri + SQLite como base principal salvo que exista evidencia medible de una alternativa mejor. No regreses a Electron ni JSON plano sin justificar peso, rendimiento, seguridad, mantenibilidad y compatibilidad.
 6. Conserva compatibilidad o crea una migración automática y probada para los datos ya existentes. Nunca provoques pérdida silenciosa de información.
 7. No inventes requisitos fiscales. Contrasta e-CF, formatos, estados, secuencias, XML, firma, recepción, aprobación comercial, contingencias y reportes contra documentación oficial vigente de la DGII. Separa claramente simulación, pruebas y producción.
 8. No declares una función terminada si solo existe visualmente. Debe funcionar de interfaz a API, persistencia, validación, auditoría y recuperación de errores.
@@ -58,7 +59,7 @@ El resultado debe sentirse como un producto premium moderno, no como un panel ad
 
 ## Arquitectura y datos
 
-Evalúa y ejecuta la transición desde JSON a una base local transaccional apropiada, preferiblemente SQLite si el análisis la confirma. La solución final debe incluir:
+Consolida la transición ya iniciada desde JSON a SQLite. La solución final debe incluir:
 
 - Esquema versionado y migraciones automáticas, idempotentes y probadas.
 - Transacciones ACID para facturación, inventario, pagos, contabilidad y secuencias fiscales.
@@ -127,7 +128,7 @@ Crea datos sintéticos y pruebas de carga representativas. Mide antes y después
 
 ## Seguridad y distribución comercial
 
-- Endurece Electron: `contextIsolation`, sandbox cuando sea compatible, sin `nodeIntegration` en renderer, CSP estricta, IPC mínimo validado y navegación/ventanas externas controladas.
+- Endurece Tauri: capacidades mínimas, CSP estricta, sidecar limitado a localhost, instancia única, navegación externa controlada y proceso auxiliar terminado con la ventana.
 - Evita exponer el servidor local a la red. Usa loopback y un puerto dinámico o un canal local seguro; protege las APIs aunque sean locales.
 - Almacena secretos, certificados y claves usando mecanismos seguros del sistema operativo cuando sea posible. Nunca los registres en logs.
 - Fortalece contraseñas, sesiones, expiración, rate limiting y protección de endpoints administrativos.

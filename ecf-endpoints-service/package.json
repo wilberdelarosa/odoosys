@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "bin": "dist/server.js",
   "scripts": {
     "dev": "tsx src/server.ts",
     "start": "tsx src/server.ts",
@@ -11,7 +12,14 @@
     "check": "tsc --noEmit",
     "test:system": "tsx src/system-test.ts",
     "verify:local-node": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-local-node.ps1",
-    "test:system:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-system-test-local.ps1"
+    "test:system:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-system-test-local.ps1",
+    "bundle:exe": "esbuild src/server.ts --bundle --platform=node --target=node22 --format=cjs --outfile=build/server.cjs",
+    "build:exe": "npm run build && npm run bundle:exe && pkg build/server.cjs --config package.json --target node22-win-x64 --compress Zstd --fallback-to-source --output build/ecf-service.exe"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ]
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.8.11",
@@ -29,7 +37,9 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.10",
-    "tsx": "^4.19.3",
+    "@yao-pkg/pkg": "^6.21.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.23.0",
     "typescript": "^5.8.2"
   }
 }

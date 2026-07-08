@@ -1,0 +1,15 @@
+{
+  "name": "dgii-ecf-tauri",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:sidecar": "npm --prefix ../ecf-endpoints-service run build:exe && node scripts/prepare-sidecar.mjs",
+    "dev": "npm run prepare:sidecar && tauri dev",
+    "build": "tauri build",
+    "build:debug": "tauri build --debug"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4"
+  }
+}

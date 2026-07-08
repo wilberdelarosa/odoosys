@@ -1,0 +1,18 @@
+[package]
+name = "dgii-ecf-desktop"
+version = "1.2.0"
+description = "Sistema local ligero de facturacion electronica DGII"
+authors = ["wilberdelarosa"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-shell = "2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

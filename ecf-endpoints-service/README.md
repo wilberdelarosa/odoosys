@@ -20,7 +20,7 @@ Tambien expone las rutas que pide DGII en la postulacion del software:
 - Ordenes de venta locales y conversion a factura.
 - Inventario local simple con movimientos y control de stock negativo.
 - Asientos contables automaticos para factura y cobro, con validacion de partida doble.
-- Persistencia local con escritura atomica y backup `.bak`.
+- Persistencia local SQLite transaccional con WAL, `synchronous=FULL`, backups en linea y recuperacion automatica.
 - Generacion de XML e-CF firmado.
 - Generacion de ARECF firmado.
 - Generacion de ACECF firmado.
@@ -59,7 +59,7 @@ npm run verify:local-node
 
 La verificacion levanta `dist/server.js` en `127.0.0.1:3300`, usa almacenamiento temporal local, crea una secuencia fiscal `E32`, crea una factura, emite e-CF desde esa secuencia, registra un cobro local, valida firma XML, corre pruebas de precertificacion y reporta memoria del proceso. Esta prueba no arranca Docker, Odoo, Python ni PostgreSQL.
 
-Estado actual de migracion: este servicio Node ya cubre la capa e-CF local, CRUD basico de clientes/productos/facturas, secuencias fiscales e-NCF, cobros simples, ordenes de venta, inventario simple, asientos contables basicos, backups locales y una UI/laboratorio de facturacion de prueba. El reemplazo completo de Odoo todavia requiere reportes avanzados, usuarios/permisos, notas de credito/debito completas, anulaciones fiscales y empaquetado Electron/instalador firmado si se quiere distribuir como app nativa.
+Estado actual de migracion: el servicio cubre clientes, productos, facturas, secuencias e-NCF, cobros, ordenes de venta, inventario, contabilidad basica, compras, notas de credito/debito, anulaciones y reportes DGII 606/607/608. La persistencia usa SQLite y migra automaticamente el JSON anterior. El instalador Windows ligero se construye desde `../desktop-tauri`; Electron queda como empaquetado legado.
 
 ## Pruebas
 

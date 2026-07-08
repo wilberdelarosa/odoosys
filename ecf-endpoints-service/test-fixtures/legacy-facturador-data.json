@@ -1,0 +1,54 @@
+{
+  "company": {
+    "rnc": "101010101",
+    "razonSocial": "EMPRESA LEGACY SRL",
+    "nombreComercial": "EMPRESA LEGACY",
+    "direccion": "Santo Domingo",
+    "provincia": "Distrito Nacional",
+    "municipio": "Santo Domingo de Guzman",
+    "correo": "legacy@test.local",
+    "telefono": "8090000000",
+    "softwareName": "Mi ECF Service",
+    "softwareVersion": "0.9.0",
+    "nextSequence": 1
+  },
+  "fiscalSequences": [
+    {
+      "id": "seq-e31-legacy",
+      "documentType": "E31",
+      "prefix": "E31",
+      "nextNumber": 1,
+      "endNumber": 9999999999,
+      "expirationDate": "2028-12-31",
+      "active": true,
+      "description": "Secuencia heredada E31"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cliente-legacy",
+      "rnc": "130862346",
+      "razonSocial": "CLIENTE LEGACY SRL",
+      "correo": "cliente@test.local",
+      "direccion": "Santo Domingo"
+    }
+  ],
+  "products": [
+    {
+      "id": "servicio-legacy",
+      "nombre": "Servicio heredado",
+      "descripcion": "Servicio para validar migracion",
+      "precio": 1500,
+      "itbisRate": 0.18,
+      "trackInventory": false,
+      "stockOnHand": 0,
+      "reorderPoint": 0
+    }
+  ],
+  "invoices": [],
+  "payments": [],
+  "inventoryMovements": [],
+  "saleOrders": [],
+  "journalEntries": [],
+  "purchases": []
+}
