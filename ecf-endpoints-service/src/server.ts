@@ -4,6 +4,7 @@ import express, { Request } from 'express';
 import forge from 'node-forge';
 import multer from 'multer';
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -1204,11 +1205,29 @@ async function bootstrap() {
     console.log(JSON.stringify(softwareConfig, null, 2));
   };
 
-  if (config.host) {
-    app.listen(config.port, config.host, onListen);
-  } else {
-    app.listen(config.port, onListen);
-  }
+  return await new Promise<http.Server>((resolve) => {
+    const updateRuntimeBaseUrl = (server: http.Server) => {
+      const address = server.address();
+      if (typeof address === 'object' && address) {
+        config.port = address.port;
+        config.publicBaseUrl = normalizeBaseUrl(
+          `http://${config.host || '127.0.0.1'}:${address.port}`
+        );
+      }
+    };
+
+    const server = config.host
+      ? app.listen(config.port, config.host, () => {
+          updateRuntimeBaseUrl(server);
+          onListen();
+          resolve(server);
+        })
+      : app.listen(config.port, () => {
+          updateRuntimeBaseUrl(server);
+          onListen();
+          resolve(server);
+        });
+  });
 }
 
 function buildSoftwareConfig() {
@@ -1385,10 +1404,49 @@ function getAllowedCorsOrigin(origin: string | undefined) {
   return allowedOrigins.has(origin) ? origin : '';
 }
 
-bootstrap().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+export interface LocalServerHandle {
+  close: () => Promise<void>;
+  port: number;
+  host: string;
+  storageRoot: string;
+}
+
+let serverHandlePromise: Promise<LocalServerHandle> | null = null;
+
+export async function startServer(): Promise<LocalServerHandle> {
+  if (serverHandlePromise) {
+    return serverHandlePromise;
+  }
+
+  serverHandlePromise = bootstrap().then((server) => {
+    const address = server.address();
+    return {
+      close: () =>
+        new Promise<void>((resolve, reject) => {
+          server.close((error) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            serverHandlePromise = null;
+            resolve();
+          });
+        }),
+      port: typeof address === 'object' && address ? address.port : config.port,
+      host: config.host || '127.0.0.1',
+      storageRoot,
+    };
+  });
+
+  return serverHandlePromise;
+}
+
+if (shouldAutoStart()) {
+  startServer().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
 
 async function loadAppData(): Promise<AppData> {
   if (!fs.existsSync(dataFile)) {
@@ -1584,6 +1642,15 @@ function validateProductPayload(payload: Record<string, unknown>) {
 
 function roundForReport(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function shouldAutoStart() {
+  const entryPoint = process.argv[1];
+  if (!entryPoint) {
+    return false;
+  }
+
+  return path.resolve(entryPoint) === __filename;
 }
 
 function upsertCustomerFromExternal(data: AppData, payload: Record<string, unknown>) {

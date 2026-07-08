@@ -1,0 +1,223 @@
+.ops-dashboard {
+    background: var(--od-bg-app);
+    min-height: 100%;
+    padding: var(--od-space-8) var(--od-space-8) var(--od-space-12);
+    font-family: var(--od-font-sans);
+
+    // -------- Hero header --------
+    .ops-dashboard__hero {
+        background: linear-gradient(135deg, var(--od-color-primary-strong) 0%, var(--od-color-primary) 60%, var(--od-color-primary-hover) 100%);
+        color: var(--od-text-on-primary);
+        border-radius: var(--od-radius-2xl);
+        padding: var(--od-space-10) var(--od-space-10);
+        margin-bottom: var(--od-space-8);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--od-space-6);
+        box-shadow: var(--od-shadow-lg);
+        position: relative;
+        overflow: hidden;
+
+        // Halo decorativo
+        &::after {
+            content: "";
+            position: absolute;
+            right: -80px;
+            top: -80px;
+            width: 360px;
+            height: 360px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .ops-dashboard__hero-text {
+            position: relative;
+            z-index: 1;
+            max-width: 720px;
+        }
+
+        .ops-dashboard__date {
+            font-size: var(--od-font-size-sm);
+            font-weight: var(--od-font-weight-semibold);
+            text-transform: uppercase;
+            letter-spacing: var(--od-tracking-caps);
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: var(--od-space-2);
+        }
+
+        .ops-dashboard__title {
+            font-size: var(--od-font-size-4xl);
+            font-weight: var(--od-font-weight-black);
+            color: var(--od-text-on-primary);
+            margin: 0 0 var(--od-space-3);
+            letter-spacing: var(--od-tracking-tight);
+            line-height: var(--od-line-height-tight);
+        }
+
+        .ops-dashboard__subtitle {
+            font-size: var(--od-font-size-md);
+            color: rgba(255, 255, 255, 0.85);
+            margin: 0;
+            line-height: var(--od-line-height-base);
+        }
+
+        .ops-dashboard__hero-deco {
+            position: relative;
+            z-index: 1;
+            width: 96px;
+            height: 96px;
+            border-radius: var(--od-radius-2xl);
+            background: rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--od-color-accent);
+            font-size: 40px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.20);
+        }
+    }
+
+    // -------- Loading --------
+    .ops-dashboard__loading {
+        display: flex;
+        align-items: center;
+        gap: var(--od-space-3);
+        color: var(--od-text-muted);
+        font-size: var(--od-font-size-md);
+        padding: var(--od-space-8);
+        justify-content: center;
+        background: var(--od-bg-surface);
+        border-radius: var(--od-radius-lg);
+        border: 1px solid var(--od-border-soft);
+    }
+
+    .ops-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--od-border-medium);
+        border-top-color: var(--od-color-primary);
+        border-radius: 50%;
+        animation: ops-spin 0.8s linear infinite;
+    }
+
+    @keyframes ops-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    // -------- Secciones --------
+    .ops-dashboard__section {
+        margin-bottom: var(--od-space-10);
+    }
+
+    .ops-dashboard__section-title {
+        font-size: var(--od-font-size-lg);
+        font-weight: var(--od-font-weight-bold);
+        color: var(--od-text-strong);
+        margin: 0 0 var(--od-space-4);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--od-space-2);
+        letter-spacing: var(--od-tracking-tight);
+
+        i {
+            color: var(--od-color-primary);
+            font-size: 16px;
+        }
+    }
+
+    .ops-dashboard__grid {
+        display: grid;
+        gap: var(--od-space-4);
+    }
+
+    .ops-dashboard__grid--metrics {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+
+    .ops-dashboard__grid--actions {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    // -------- Cards de Prefecturas Sectoriales --------
+    .ops-sector-card {
+        background: var(--od-bg-surface);
+        border: 1.5px solid var(--od-border-soft);
+        border-radius: var(--od-radius-md);
+        padding: var(--od-space-4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--od-space-2);
+        cursor: pointer;
+        transition: all var(--od-duration-base) var(--od-ease);
+        text-align: center;
+        box-shadow: var(--od-shadow-xs);
+
+        &:hover {
+            transform: translateY(-3px);
+            border-color: var(--od-color-primary);
+            box-shadow: var(--od-shadow-md);
+        }
+
+        &.active {
+            border-color: var(--od-color-primary);
+            background-color: var(--od-color-primary-soft);
+            color: var(--od-color-primary);
+            border-width: 1.5px;
+            box-shadow: var(--od-shadow-sm);
+
+            .ops-sector-card__icon i {
+                color: var(--od-color-primary);
+            }
+            .ops-sector-card__label {
+                color: var(--od-color-primary);
+            }
+        }
+
+        .ops-sector-card__icon {
+            font-size: 20px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            
+            i {
+                color: var(--od-text-muted);
+                transition: color var(--od-duration-base) var(--od-ease);
+            }
+        }
+
+        .ops-sector-card__label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: var(--od-tracking-wide);
+            font-weight: var(--od-font-weight-bold);
+            color: var(--od-text-main);
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .ops-dashboard {
+        padding: var(--od-space-4);
+
+        .ops-dashboard__hero {
+            padding: var(--od-space-6);
+            border-radius: var(--od-radius-lg);
+
+            .ops-dashboard__title {
+                font-size: var(--od-font-size-2xl);
+            }
+
+            .ops-dashboard__hero-deco {
+                width: 64px;
+                height: 64px;
+                font-size: 28px;
+            }
+        }
+    }
+}

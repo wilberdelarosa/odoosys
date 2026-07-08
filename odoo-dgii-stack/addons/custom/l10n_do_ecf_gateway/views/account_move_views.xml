@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_form_ecf_gateway" model="ir.ui.view">
+        <field name="name">account.move.form.ecf.gateway.flow</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_ecf_check_readiness"
+                        type="object"
+                        string="Validar e-CF"
+                        class="btn-secondary"
+                        invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <button name="action_ecf_run_full_flow"
+                        type="object"
+                        string="Firmar e-CF + QR"
+                        class="oe_highlight"
+                        invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund') or not is_ecf_invoice"/>
+                <button name="action_ecf_prepare_portal_payload"
+                    type="object"
+                    string="Preparar portal DGII"
+                    class="btn-secondary"
+                    invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund') or not is_ecf_invoice"/>
+                <button name="action_ecf_retry_send"
+                        type="object"
+                        string="Reintentar e-CF"
+                        class="btn-warning"
+                        invisible="dgii_ecf_gateway_state != 'error'"/>
+                <button name="action_ecf_open_configuration"
+                        type="object"
+                        string="Configurar e-CF"
+                        invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </xpath>
+            <xpath expr="//sheet/group" position="inside">
+                <group string="Flujo e-CF DGII">
+                    <field name="dgii_ecf_flow_state" readonly="1"/>
+                    <field name="dgii_ecf_gateway_state" readonly="1"/>
+                    <field name="dgii_ecf_track_id" readonly="1"/>
+                    <field name="l10n_do_ecf_security_code" readonly="1"/>
+                    <field name="l10n_do_ecf_sign_date" readonly="1"/>
+                    <field name="dgii_ecf_qr_url" readonly="1"/>
+                    <field name="dgii_ecf_template_id" options="{'no_create_edit': False}"/>
+                </group>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="e-CF DGII" name="dgii_ecf_flow">
+                    <group>
+                        <field name="dgii_ecf_readiness_summary" readonly="1" widget="text"/>
+                        <field name="dgii_ecf_gateway_response" readonly="1" widget="text"/>
+                        <field name="dgii_ecf_portal_payload" readonly="1" widget="text"/>
+                    </group>
+                    <group string="XML firmado">
+                        <field name="dgii_ecf_signed_xml" readonly="1" widget="text"/>
+                        <field name="dgii_ecf_arecf_xml" readonly="1" widget="text"/>
+                        <field name="dgii_ecf_acecf_xml" readonly="1" widget="text"/>
+                    </group>
+                </page>
+                <page string="Plantilla e-CF" name="dgii_ecf_template">
+                    <button name="action_ecf_render_template"
+                            type="object"
+                            string="Renderizar plantilla"
+                            class="btn-secondary"/>
+                    <field name="dgii_ecf_rendered_html" readonly="1" widget="html" nolabel="1"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

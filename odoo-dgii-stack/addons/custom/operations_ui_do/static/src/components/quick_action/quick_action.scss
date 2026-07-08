@@ -1,0 +1,84 @@
+.ops-quick-action {
+    background: var(--od-bg-surface);
+    border: 1.5px solid var(--od-border-soft);
+    border-radius: var(--od-radius-lg);
+    padding: var(--od-space-4) var(--od-space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--od-space-4);
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: all var(--od-duration-base) var(--od-ease);
+    box-shadow: var(--od-shadow-xs);
+    color: var(--od-text-main);
+}
+
+.ops-quick-action:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--od-shadow-md);
+    border-color: var(--od-color-primary);
+    background: var(--od-color-primary-soft);
+}
+
+.ops-quick-action:hover .ops-quick-action__arrow {
+    transform: translateX(6px);
+    opacity: 1;
+    color: var(--od-color-primary-hover);
+}
+
+.ops-quick-action:hover .ops-quick-action__icon {
+    transform: scale(1.05) rotate(2deg);
+}
+
+.ops-quick-action__icon {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--od-radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--od-font-size-xl);
+    transition: transform var(--od-duration-base) var(--od-ease);
+    background: var(--od-color-primary-soft);
+    color: var(--od-color-primary);
+}
+
+.ops-quick-action.tone-accent .ops-quick-action__icon {
+    background: var(--od-color-accent-soft);
+    color: var(--od-color-accent-hover);
+}
+
+.ops-quick-action.tone-neutral .ops-quick-action__icon {
+    background: var(--od-bg-muted);
+    color: var(--od-text-strong);
+}
+
+.ops-quick-action__body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ops-quick-action__title {
+    font-size: var(--od-font-size-base);
+    font-weight: var(--od-font-weight-bold);
+    color: var(--od-text-strong);
+    letter-spacing: var(--od-tracking-tight);
+}
+
+.ops-quick-action__desc {
+    font-size: var(--od-font-size-sm);
+    color: var(--od-text-muted);
+    line-height: var(--od-line-height-snug);
+}
+
+.ops-quick-action__arrow {
+    color: var(--od-color-primary);
+    opacity: 0.4;
+    transition: all var(--od-duration-base) var(--od-ease);
+    font-size: 13px;
+}

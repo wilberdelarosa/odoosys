@@ -17,3 +17,8 @@ windows-native/runtime/
 # Nested repos and generated dependencies
 dgii-ecf-check/node_modules/
 dgii-ecf-check/dist/
+
+# Desktop Electron packaging
+desktop-electron/node_modules/
+desktop-electron/release/
+desktop-electron/service/

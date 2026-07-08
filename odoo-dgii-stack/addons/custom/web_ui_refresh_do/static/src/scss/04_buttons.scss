@@ -1,0 +1,154 @@
+// =============================================================================
+//  04_buttons.scss
+//  Botones modernos: solidos, sutiles, con jerarquia visual clara.
+// =============================================================================
+
+.o_web_client {
+
+    // Reset general - alturas, fuente, foco
+    .btn {
+        font-family: var(--od-font-sans);
+        font-weight: var(--od-font-weight-semibold);
+        font-size: var(--od-font-size-base);
+        line-height: var(--od-line-height-snug);
+        letter-spacing: var(--od-tracking-tight);
+        border-radius: var(--od-radius-md);
+        padding: 8px 16px;
+        min-height: 38px;
+        border: 1px solid transparent;
+        transition:
+            transform var(--od-duration-fast) var(--od-ease),
+            background var(--od-duration-fast) var(--od-ease),
+            box-shadow var(--od-duration-fast) var(--od-ease),
+            color var(--od-duration-fast) var(--od-ease);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--od-space-2);
+
+        i, .fa {
+            font-size: 14px;
+        }
+
+        &:active:not(:disabled) {
+            transform: translateY(0.5px);
+        }
+
+        &:focus-visible {
+            box-shadow: var(--od-shadow-focus);
+        }
+    }
+
+    // Primario (CTA principal)
+    .btn-primary,
+    .btn-primary:not(:disabled):not(.disabled) {
+        background: var(--od-color-primary);
+        border-color: var(--od-color-primary);
+        color: var(--od-text-on-primary);
+        box-shadow: var(--od-shadow-sm);
+
+        &:hover {
+            background: var(--od-color-primary-hover);
+            border-color: var(--od-color-primary-hover);
+            box-shadow: var(--od-shadow-md);
+            color: var(--od-text-on-primary);
+        }
+    }
+
+    // oe_highlight (Confirmar, Validar, Crear factura) - usa accent ambar
+    .oe_highlight,
+    .btn.oe_highlight {
+        background: var(--od-color-accent);
+        border-color: var(--od-color-accent);
+        color: var(--od-color-primary-strong);
+        box-shadow: var(--od-shadow-sm);
+        font-weight: var(--od-font-weight-bold);
+
+        &:hover {
+            background: var(--od-color-accent-hover);
+            border-color: var(--od-color-accent-hover);
+            box-shadow: var(--od-shadow-md);
+            color: var(--od-color-primary-strong);
+        }
+    }
+
+    // Secundario (acciones neutras)
+    .btn-secondary,
+    .btn-default {
+        background: var(--od-bg-surface);
+        border-color: var(--od-border-medium);
+        color: var(--od-text-main);
+
+        &:hover {
+            background: var(--od-bg-muted);
+            border-color: var(--od-border-strong);
+            color: var(--od-text-strong);
+        }
+    }
+
+    // Outline / link (acciones suaves)
+    .btn-link {
+        color: var(--od-color-primary);
+        font-weight: var(--od-font-weight-semibold);
+        text-decoration: none;
+        background: transparent;
+        border: none;
+        padding: var(--od-space-2) var(--od-space-3);
+        border-radius: var(--od-radius-sm);
+
+        &:hover {
+            background: var(--od-color-primary-soft);
+            color: var(--od-color-primary-strong);
+            text-decoration: none;
+        }
+    }
+
+    // Estados semanticos
+    .btn-success {
+        background: var(--od-color-success);
+        border-color: var(--od-color-success);
+        color: #fff;
+        &:hover { background: #126b48; border-color: #126b48; color: #fff; }
+    }
+    .btn-warning {
+        background: var(--od-color-warning);
+        border-color: var(--od-color-warning);
+        color: #fff;
+        &:hover { background: #a86d00; border-color: #a86d00; color: #fff; }
+    }
+    .btn-danger {
+        background: var(--od-color-danger);
+        border-color: var(--od-color-danger);
+        color: #fff;
+        &:hover { background: #b73a3a; border-color: #b73a3a; color: #fff; }
+    }
+    .btn-info {
+        background: var(--od-color-info);
+        border-color: var(--od-color-info);
+        color: #fff;
+        &:hover { background: #1e57a8; border-color: #1e57a8; color: #fff; }
+    }
+
+    // Botones con icono solo (toolbar)
+    .btn.o_btn_icon,
+    .btn:has(> i:only-child),
+    .btn:has(> .fa:only-child) {
+        padding: 8px;
+        min-width: 38px;
+    }
+
+    // Botones desactivados
+    .btn:disabled,
+    .btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    // Botones grupo (button group)
+    .btn-group .btn {
+        border-radius: 0;
+        &:first-child { border-top-left-radius: var(--od-radius-md); border-bottom-left-radius: var(--od-radius-md); }
+        &:last-child  { border-top-right-radius: var(--od-radius-md); border-bottom-right-radius: var(--od-radius-md); }
+    }
+}

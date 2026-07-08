@@ -1,0 +1,110 @@
+// =============================================================================
+//  08_modals.scss
+//  Modales y dialogos - vidrio + sombra premium, foco claro.
+// =============================================================================
+
+.o_web_client ~ .o_dialog_container,
+.o_dialog_container,
+.o_dialog {
+
+    .modal-backdrop,
+    .o_dialog_backdrop {
+        background: var(--od-bg-overlay);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+    .modal-dialog {
+        max-width: 720px;
+        margin: var(--od-space-12) auto;
+    }
+
+    .modal-content,
+    .o_dialog .modal-content {
+        background: var(--od-bg-elevated);
+        border: 1px solid var(--od-border-soft);
+        border-radius: var(--od-radius-xl);
+        box-shadow: var(--od-shadow-xl);
+        overflow: hidden;
+
+        .modal-header {
+            background: var(--od-bg-surface);
+            border-bottom: 1px solid var(--od-border-soft);
+            padding: var(--od-space-5) var(--od-space-6);
+
+            .modal-title,
+            h4, h5 {
+                font-size: var(--od-font-size-xl);
+                font-weight: var(--od-font-weight-bold);
+                color: var(--od-text-strong);
+                letter-spacing: var(--od-tracking-tight);
+                margin: 0;
+            }
+
+            .btn-close,
+            button[aria-label="Close"],
+            button[aria-label="Cerrar"] {
+                width: 32px;
+                height: 32px;
+                border-radius: var(--od-radius-sm);
+                background: transparent;
+                color: var(--od-text-muted);
+                opacity: 1;
+                transition: all var(--od-duration-fast) var(--od-ease);
+
+                &:hover {
+                    background: var(--od-bg-muted);
+                    color: var(--od-text-strong);
+                }
+            }
+        }
+
+        .modal-body {
+            padding: var(--od-space-6);
+            background: var(--od-bg-surface);
+            color: var(--od-text-main);
+            font-size: var(--od-font-size-base);
+            line-height: var(--od-line-height-base);
+
+            label, .o_form_label {
+                color: var(--od-text-muted);
+                font-size: var(--od-font-size-sm);
+                font-weight: var(--od-font-weight-semibold);
+                text-transform: uppercase;
+                letter-spacing: var(--od-tracking-caps);
+            }
+        }
+
+        .modal-footer {
+            background: var(--od-bg-surface-2);
+            border-top: 1px solid var(--od-border-soft);
+            padding: var(--od-space-4) var(--od-space-6);
+            gap: var(--od-space-2);
+        }
+    }
+}
+
+// Toast / notifications
+.o_notification_manager {
+    .o_notification {
+        background: var(--od-bg-elevated);
+        border-left: 4px solid var(--od-color-primary);
+        border-radius: var(--od-radius-md);
+        box-shadow: var(--od-shadow-lg);
+        padding: var(--od-space-4) var(--od-space-5);
+        font-size: var(--od-font-size-base);
+        color: var(--od-text-strong);
+        font-weight: var(--od-font-weight-medium);
+
+        &.bg-success, &.text-bg-success { border-left-color: var(--od-color-success); }
+        &.bg-warning, &.text-bg-warning { border-left-color: var(--od-color-warning); }
+        &.bg-danger,  &.text-bg-danger  { border-left-color: var(--od-color-danger); }
+        &.bg-info,    &.text-bg-info    { border-left-color: var(--od-color-info); }
+
+        .o_notification_title {
+            font-weight: var(--od-font-weight-bold);
+            font-size: var(--od-font-size-md);
+            margin-bottom: var(--od-space-1);
+        }
+    }
+}

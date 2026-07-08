@@ -2,6 +2,8 @@
 
 Launcher local para correr `ecf-endpoints-service` como aplicacion de escritorio ligera sin Docker, Odoo ni PostgreSQL.
 
+Para distribucion desktop real ahora existe `..\desktop-electron`. Este launcher PowerShell queda como fallback tecnico y ruta simple de soporte local.
+
 ## Uso
 
 ```powershell

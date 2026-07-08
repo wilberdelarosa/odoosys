@@ -1,0 +1,98 @@
+.ops-metric-card {
+    background: var(--od-bg-surface);
+    border: 1.5px solid var(--od-border-soft);
+    border-radius: var(--od-radius-lg);
+    padding: var(--od-space-5);
+    box-shadow: var(--od-shadow-sm);
+    transition:
+        transform var(--od-duration-base) var(--od-ease),
+        box-shadow var(--od-duration-base) var(--od-ease),
+        border-color var(--od-duration-base) var(--od-ease),
+        background-color var(--od-duration-base) var(--od-ease);
+    display: flex;
+    flex-direction: column;
+    gap: var(--od-space-3);
+    position: relative;
+    overflow: hidden;
+
+    &.is-clickable {
+        cursor: pointer;
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--od-shadow-lg);
+            border-color: var(--od-color-primary);
+            background-color: var(--od-color-primary-soft);
+        }
+    }
+
+    .ops-metric-card__head {
+        display: flex;
+        align-items: center;
+        gap: var(--od-space-3);
+    }
+
+    .ops-metric-card__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--od-radius-md);
+        background: var(--od-color-primary-soft);
+        color: var(--od-color-primary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--od-font-size-lg);
+        transition: transform var(--od-duration-base) var(--od-ease);
+    }
+
+    &:hover .ops-metric-card__icon {
+        transform: scale(1.08) rotate(-2deg);
+    }
+
+    .tone-success .ops-metric-card__icon { background: var(--od-color-success-soft); color: var(--od-color-success); }
+    .tone-warning .ops-metric-card__icon { background: var(--od-color-warning-soft); color: var(--od-color-warning); }
+    .tone-danger  .ops-metric-card__icon { background: var(--od-color-danger-soft);  color: var(--od-color-danger); }
+    .tone-info    .ops-metric-card__icon { background: var(--od-color-info-soft);    color: var(--od-color-info); }
+
+    .ops-metric-card__label {
+        font-size: var(--od-font-size-xs);
+        font-weight: var(--od-font-weight-bold);
+        color: var(--od-text-muted);
+        text-transform: uppercase;
+        letter-spacing: var(--od-tracking-caps);
+    }
+
+    .ops-metric-card__value {
+        font-size: var(--od-font-size-2xl);
+        font-weight: var(--od-font-weight-black);
+        color: var(--od-text-strong);
+        font-feature-settings: "tnum";
+        line-height: var(--od-line-height-tight);
+        letter-spacing: var(--od-tracking-tight);
+    }
+
+    .ops-metric-card__trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--od-font-size-xs);
+        font-weight: var(--od-font-weight-semibold);
+        padding: 2px 8px;
+        border-radius: var(--od-radius-pill);
+        align-self: flex-start;
+
+        &.is-up {
+            background: var(--od-color-success-soft);
+            color: var(--od-color-success);
+        }
+        &.is-down {
+            background: var(--od-color-danger-soft);
+            color: var(--od-color-danger);
+        }
+
+        .ops-metric-card__trend-note {
+            color: var(--od-text-muted);
+            font-weight: var(--od-font-weight-regular);
+            background: transparent;
+        }
+    }
+}

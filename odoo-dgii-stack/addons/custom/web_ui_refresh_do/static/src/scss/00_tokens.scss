@@ -1,0 +1,123 @@
+// =============================================================================
+//  00_tokens.scss
+//  Sistema de design tokens para Odoo UI Refresh DO.
+//  Inspirado en ERPs modernos tipo Linear / Stripe / Notion / Vercel.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// PALETA - Identidad ERP premium dominicana (Rediseño Estilo Apple / Stripe)
+// -----------------------------------------------------------------------------
+:root {
+    // Marca principal: De Azul Petróleo opaco a Azul Eléctrico vibrante de alta gama
+    --od-color-primary:        #2563eb;
+    --od-color-primary-hover:  #1d4ed8;
+    --od-color-primary-strong: #1e3a8a;
+    --od-color-primary-soft:   #eff6ff;
+    --od-color-primary-tint:   #f8fafc;
+
+    // Acento: Ambar vibrante Premium
+    --od-color-accent:         #f59e0b;
+    --od-color-accent-hover:   #d97706;
+    --od-color-accent-soft:    #fef3c7;
+
+    // Estados semanticos mas limpios y elegantes
+    --od-color-success:        #10b981;
+    --od-color-success-soft:   #ecfdf5;
+    --od-color-warning:        #f59e0b;
+    --od-color-warning-soft:   #fffbeb;
+    --od-color-danger:         #ef4444;
+    --od-color-danger-soft:    #fef2f2;
+    --od-color-info:           #3b82f6;
+    --od-color-info-soft:      #eff6ff;
+
+    // Superficies
+    --od-bg-app:        #f1f5f9;
+    --od-bg-surface:    #ffffff;
+    --od-bg-surface-2:  #f8fafc;
+    --od-bg-muted:      #f1f5f9;
+    --od-bg-elevated:   #ffffff;
+    --od-bg-overlay:    rgba(15, 23, 42, 0.6);
+
+    // Texto
+    --od-text-strong:   #0f172a;
+    --od-text-main:     #334155;
+    --od-text-muted:    #64748b;
+    --od-text-subtle:   #94a3b8;
+    --od-text-on-primary: #ffffff;
+
+    // Bordes
+    --od-border-soft:   #e2e8f0;
+    --od-border-medium: #cbd5e1;
+    --od-border-strong: #94a3b8;
+    --od-border-focus:  #2563eb;
+
+    // Radios (ERP moderno = bordes generosos, no extremos)
+    --od-radius-xs:  6px;
+    --od-radius-sm:  8px;
+    --od-radius-md:  12px;
+    --od-radius-lg:  16px;
+    --od-radius-xl:  20px;
+    --od-radius-2xl: 28px;
+    --od-radius-pill: 999px;
+
+    // Sombras (suaves y profesionales, nunca agresivas)
+    --od-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.05);
+    --od-shadow-sm:    0 2px 6px rgba(0, 0, 0, 0.06);
+    --od-shadow-md:    0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    --od-shadow-lg:    0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --od-shadow-xl:    0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    --od-shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.2);
+
+    // Spacing scale (multiplos de 4)
+    --od-space-1:  4px;
+    --od-space-2:  8px;
+    --od-space-3:  12px;
+    --od-space-4:  16px;
+    --od-space-5:  20px;
+    --od-space-6:  24px;
+    --od-space-8:  32px;
+    --od-space-10: 40px;
+    --od-space-12: 48px;
+
+    // Tipografia
+    --od-font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --od-font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+    --od-font-size-xs:   12px;
+    --od-font-size-sm:   13px;
+    --od-font-size-base: 14px;
+    --od-font-size-md:   15px;
+    --od-font-size-lg:   17px;
+    --od-font-size-xl:   20px;
+    --od-font-size-2xl:  24px;
+    --od-font-size-3xl:  30px;
+    --od-font-size-4xl:  36px;
+
+    --od-font-weight-regular:  400;
+    --od-font-weight-medium:   500;
+    --od-font-weight-semibold: 600;
+    --od-font-weight-bold:     700;
+    --od-font-weight-black:    800;
+
+    --od-line-height-tight: 1.2;
+    --od-line-height-snug:  1.35;
+    --od-line-height-base:  1.55;
+    --od-line-height-loose: 1.75;
+
+    --od-tracking-tight:   -0.015em;
+    --od-tracking-normal:   0;
+    --od-tracking-wide:    0.04em;
+    --od-tracking-caps:    0.08em;
+
+    // Transiciones (rapidas, vivas, sin lag)
+    --od-ease:        cubic-bezier(0.16, 1, 0.3, 1);
+    --od-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+    --od-duration-fast:   120ms;
+    --od-duration-base:   180ms;
+    --od-duration-slow:   280ms;
+
+    // z-index
+    --od-z-navbar: 1020;
+    --od-z-modal:  1060;
+    --od-z-toast:  1090;
+}

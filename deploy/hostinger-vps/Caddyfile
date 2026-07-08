@@ -1,0 +1,24 @@
+{
+    email {$TLS_EMAIL}
+}
+
+{$ODOO_DOMAIN} {
+    encode gzip zstd
+    reverse_proxy odoo:8069
+}
+
+{$GATEWAY_DOMAIN} {
+    encode gzip zstd
+
+    @dgii_public path /fe/* /health /software-config
+    handle @dgii_public {
+        reverse_proxy gateway:3000
+    }
+
+    handle {
+        basic_auth {
+            {$GATEWAY_ADMIN_USER} {$GATEWAY_ADMIN_PASSWORD_HASH}
+        }
+        reverse_proxy gateway:3000
+    }
+}

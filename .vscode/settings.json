@@ -1,0 +1,23 @@
+{
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/windows-native/runtime/**": true,
+    "**/odoo-dgii-stack/**/postgres-data/**": true,
+    "**/odoo-dgii-stack/**/odoo-data/**": true,
+    "**/storage/audit/**": true,
+    "**/storage/incoming/**": true,
+    "**/storage/outgoing/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/windows-native/runtime": true,
+    "**/odoo-dgii-stack/**/postgres-data": true,
+    "**/odoo-dgii-stack/**/odoo-data": true,
+    "**/storage/audit": true,
+    "**/storage/incoming": true,
+    "**/storage/outgoing": true
+  },
+  "typescript.tsserver.maxTsServerMemory": 2048
+}

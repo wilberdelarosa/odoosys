@@ -1,0 +1,6 @@
+.env
+gateway.env
+pilot.env
+backups/
+certificados/*
+!certificados/.gitkeep

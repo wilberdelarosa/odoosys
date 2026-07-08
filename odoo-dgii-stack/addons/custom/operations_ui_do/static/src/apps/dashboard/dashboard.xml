@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="operations_ui_do.Dashboard">
+        <div class="ops-dashboard">
+
+            <!-- Hero header (Sector Adaptable) -->
+            <header class="ops-dashboard__hero">
+                <div class="ops-dashboard__hero-text">
+                    <div class="ops-dashboard__date" t-esc="state.today"/>
+                    <h1 class="ops-dashboard__title">
+                        <t t-if="state.activeSector === 'supermarket'">Hub Operativo: Supermercado</t>
+                        <t t-elif="state.activeSector === 'hardware'">Hub Operativo: Ferretería &amp; Industrial</t>
+                        <t t-elif="state.activeSector === 'logistics'">Hub Operativo: Logística &amp; Distribución</t>
+                        <t t-elif="state.activeSector === 'delivery'">Hub Operativo: Delivery / Pizza Hut / Pedidos</t>
+                        <t t-elif="state.activeSector === 'tourism'">Hub Operativo: Servicios Turísticos / Bávaro</t>
+                        <t t-elif="state.activeSector === 'furniture'">Hub Operativo: Mueblería Elegancia</t>
+                        <t t-else="">Hub Operativo</t>
+                    </h1>
+                    <p class="ops-dashboard__subtitle">
+                        <t t-if="state.activeSector === 'supermarket'">Control de ventas retail, caja rápida, facturación electrónica DGII y volumen de tickets.</t>
+                        <t t-elif="state.activeSector === 'hardware'">Consola de cotizaciones de acero, arena y cemento. Trazabilidad de cuentas por cobrar para constructores.</t>
+                        <t t-elif="state.activeSector === 'logistics'">Despacho y recepción de carga, contenedores, pesaje de andenes e inventario local con tracking QR.</t>
+                        <t t-elif="state.activeSector === 'delivery'">Asignación de cocinas, comandas rápidas, ruteo de motoristas y facturación e-CF integrada.</t>
+                        <t t-elif="state.activeSector === 'tourism'">Reserva de excursiones (Isla Saona), transfer privado y emisión de comprobantes NCF.</t>
+                        <t t-elif="state.activeSector === 'furniture'">Producción de comedores de caoba, escritorios ejecutivos de roble y despacho premium.</t>
+                        <t t-else="">Vista en tiempo real de tu operación comercial dominicana: ventas, facturación e inventario.</t>
+                    </p>
+                </div>
+                <div class="ops-dashboard__hero-deco">
+                    <i class="fa fa-bolt"/>
+                </div>
+            </header>
+
+            <!-- Selector de Giro de Negocio / Presets -->
+            <section class="ops-dashboard__section" t-if="!state.loading">
+                <h2 class="ops-dashboard__section-title">
+                    <i class="fa fa-briefcase"/>
+                    Giro Comercial o Sector de Pruebas
+                </h2>
+                <p class="text-muted" style="margin-bottom: var(--od-space-4); font-size: var(--od-font-size-sm);">Cambia el giro comercial de la empresa para reconfigurar el catálogo y clientes locales al instante:</p>
+                <div class="ops-dashboard__grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); margin-bottom: var(--od-space-8);">
+                    <div class="ops-sector-card" t-att-class="{active: state.activeSector === 'supermarket'}" t-on-click="() => this.changeBusinessPreset('supermarket')">
+                        <div class="ops-sector-card__icon"><i class="fa fa-shopping-cart"/></div>
+                        <div class="ops-sector-card__label">Supermercado</div>
+                    </div>
+                    <div class="ops-sector-card" t-att-class="{active: state.activeSector === 'hardware'}" t-on-click="() => this.changeBusinessPreset('hardware')">
+                        <div class="ops-sector-card__icon"><i class="fa fa-wrench"/></div>
+                        <div class="ops-sector-card__label">Ferretería</div>
+                    </div>
+                    <div class="ops-sector-card" t-att-class="{active: state.activeSector === 'logistics'}" t-on-click="() => this.changeBusinessPreset('logistics')">
+                        <div class="ops-sector-card__icon"><i class="fa fa-cubes"/></div>
+                        <div class="ops-sector-card__label">Logística / QR</div>
+                    </div>
+                    <div class="ops-sector-card" t-att-class="{active: state.activeSector === 'delivery'}" t-on-click="() => this.changeBusinessPreset('delivery')">
+                        <div class="ops-sector-card__icon"><i class="fa fa-motorcycle"/></div>
+                        <div class="ops-sector-card__label">Delivery</div>
+                    </div>
+                    <div class="ops-sector-card" t-att-class="{active: state.activeSector === 'tourism'}" t-on-click="() => this.changeBusinessPreset('tourism')">
+                        <div class="ops-sector-card__icon"><i class="fa fa-globe"/></div>
+                        <div class="ops-sector-card__label">Turismo</div>
+                    </div>
+                    <div class="ops-sector-card" t-att-class="{active: state.activeSector === 'furniture'}" t-on-click="() => this.changeBusinessPreset('furniture')">
+                        <div class="ops-sector-card__icon"><i class="fa fa-bed"/></div>
+                        <div class="ops-sector-card__label">Mueblería</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading state -->
+            <div class="ops-dashboard__loading" t-if="state.loading">
+                <div class="ops-spinner"/>
+                <span>Cargando metricas en vivo...</span>
+            </div>
+
+            <!-- Metricas -->
+            <section class="ops-dashboard__section" t-if="!state.loading">
+                <h2 class="ops-dashboard__section-title">
+                    <i class="fa fa-area-chart"/>
+                    Metricas clave
+                </h2>
+                <div class="ops-dashboard__grid ops-dashboard__grid--metrics">
+                    <MetricCard
+                        label="'Ventas hoy'"
+                        value="state.sales.today"
+                        currency="'DOP'"
+                        icon="'shopping-cart'"
+                        tone="'primary'"
+                        onClick.bind="openSalesList"
+                        t-if="state.modules.sale"/>
+
+                    <MetricCard
+                        label="'Ventas del mes'"
+                        value="state.sales.monthAmount"
+                        currency="'DOP'"
+                        icon="'trophy'"
+                        tone="'success'"
+                        trend="state.sales.trend"
+                        onClick.bind="openSalesList"
+                        t-if="state.modules.sale"/>
+
+                    <MetricCard
+                        label="'Ordenes del mes'"
+                        value="state.sales.monthCount"
+                        icon="'file-text-o'"
+                        tone="'info'"
+                        onClick.bind="openSalesList"
+                        t-if="state.modules.sale"/>
+
+                    <MetricCard
+                        label="'Por cobrar'"
+                        value="state.invoices.pendingAmount"
+                        currency="'DOP'"
+                        icon="'money'"
+                        tone="'warning'"
+                        onClick.bind="openInvoices"
+                        t-if="state.modules.account"/>
+
+                    <MetricCard
+                        label="'Facturas pendientes'"
+                        value="state.invoices.pendingCount"
+                        icon="'inbox'"
+                        tone="'warning'"
+                        onClick.bind="openInvoices"
+                        t-if="state.modules.account"/>
+
+                    <MetricCard
+                        label="'Movimientos hoy'"
+                        value="state.inventory.pickingsToday"
+                        icon="'truck'"
+                        tone="'info'"
+                        onClick.bind="openInventory"
+                        t-if="state.modules.stock"/>
+
+                    <MetricCard
+                        label="'Clientes nuevos (mes)'"
+                        value="state.partners.newThisMonth"
+                        icon="'user-plus'"
+                        tone="'primary'"
+                        onClick.bind="openCustomers"/>
+                </div>
+            </section>
+
+            <!-- Acciones rapidas -->
+            <section class="ops-dashboard__section" t-if="!state.loading">
+                <h2 class="ops-dashboard__section-title">
+                    <i class="fa fa-bolt"/>
+                    Acciones rapidas
+                </h2>
+                <div class="ops-dashboard__grid ops-dashboard__grid--actions">
+                    <QuickAction
+                        title="'Nueva venta'"
+                        description="'Crea una orden de venta en pocos clics'"
+                        icon="'plus-circle'"
+                        tone="'accent'"
+                        onClick.bind="openQuickSale"
+                        t-if="state.modules.sale"/>
+
+                    <QuickAction
+                        title="'Facturas'"
+                        description="'Revisa y emite facturas a clientes'"
+                        icon="'file-text'"
+                        tone="'primary'"
+                        onClick.bind="openInvoices"
+                        t-if="state.modules.account"/>
+
+                    <QuickAction
+                        title="'Inventario'"
+                        description="'Movimientos, recepciones y entregas'"
+                        icon="'cubes'"
+                        tone="'primary'"
+                        onClick.bind="openInventory"
+                        t-if="state.modules.stock"/>
+
+                    <QuickAction
+                        title="'Escanear QR'"
+                        description="'Registra productos en operaciones reales de inventario'"
+                        icon="'qrcode'"
+                        tone="'accent'"
+                        onClick.bind="openInventoryScan"
+                        t-if="state.modules.stock"/>
+
+                    <QuickAction
+                        title="'Clientes'"
+                        description="'Gestiona la base de contactos'"
+                        icon="'users'"
+                        tone="'neutral'"
+                        onClick.bind="openCustomers"/>
+
+                    <QuickAction
+                        title="'Productos'"
+                        description="'Catalogo, precios y existencias'"
+                        icon="'tags'"
+                        tone="'neutral'"
+                        onClick.bind="openProducts"/>
+                </div>
+            </section>
+
+        </div>
+    </t>
+
+</templates>

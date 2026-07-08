@@ -1,0 +1,107 @@
+// =============================================================================
+//  90_utilities.scss
+//  Utilidades reutilizables (con prefijo od-) para usar dentro de templates
+//  custom de Odoo (XML/QWeb), sin pisar Bootstrap.
+// =============================================================================
+
+.o_web_client {
+
+    // Sombras
+    .od-shadow-xs { box-shadow: var(--od-shadow-xs) !important; }
+    .od-shadow-sm { box-shadow: var(--od-shadow-sm) !important; }
+    .od-shadow-md { box-shadow: var(--od-shadow-md) !important; }
+    .od-shadow-lg { box-shadow: var(--od-shadow-lg) !important; }
+
+    // Bordes redondeados
+    .od-rounded-sm  { border-radius: var(--od-radius-sm) !important; }
+    .od-rounded-md  { border-radius: var(--od-radius-md) !important; }
+    .od-rounded-lg  { border-radius: var(--od-radius-lg) !important; }
+    .od-rounded-xl  { border-radius: var(--od-radius-xl) !important; }
+    .od-rounded-pill{ border-radius: var(--od-radius-pill) !important; }
+
+    // Superficies
+    .od-surface       { background: var(--od-bg-surface); }
+    .od-surface-2     { background: var(--od-bg-surface-2); }
+    .od-surface-muted { background: var(--od-bg-muted); }
+
+    // Texto
+    .od-text-strong { color: var(--od-text-strong) !important; }
+    .od-text-main   { color: var(--od-text-main) !important; }
+    .od-text-muted  { color: var(--od-text-muted) !important; }
+    .od-text-subtle { color: var(--od-text-subtle) !important; }
+
+    .od-font-mono    { font-family: var(--od-font-mono) !important; font-feature-settings: "tnum"; }
+    .od-font-bold    { font-weight: var(--od-font-weight-bold) !important; }
+    .od-font-semi    { font-weight: var(--od-font-weight-semibold) !important; }
+    .od-font-medium  { font-weight: var(--od-font-weight-medium) !important; }
+    .od-uppercase    { text-transform: uppercase; letter-spacing: var(--od-tracking-caps); }
+
+    // Cards reutilizables
+    .od-card {
+        background: var(--od-bg-surface);
+        border: 1px solid var(--od-border-soft);
+        border-radius: var(--od-radius-lg);
+        padding: var(--od-space-5);
+        box-shadow: var(--od-shadow-sm);
+    }
+    .od-card-hover {
+        @extend .od-card;
+        transition: all var(--od-duration-base) var(--od-ease);
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--od-color-primary);
+            box-shadow: var(--od-shadow-lg);
+            transform: translateY(-2px);
+        }
+    }
+
+    // Stack helpers
+    .od-stack-2 { display: flex; flex-direction: column; gap: var(--od-space-2); }
+    .od-stack-3 { display: flex; flex-direction: column; gap: var(--od-space-3); }
+    .od-stack-4 { display: flex; flex-direction: column; gap: var(--od-space-4); }
+    .od-stack-6 { display: flex; flex-direction: column; gap: var(--od-space-6); }
+
+    .od-row-2 { display: flex; flex-direction: row; gap: var(--od-space-2); align-items: center; }
+    .od-row-3 { display: flex; flex-direction: row; gap: var(--od-space-3); align-items: center; }
+    .od-row-4 { display: flex; flex-direction: row; gap: var(--od-space-4); align-items: center; }
+
+    // Status pills
+    .od-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        font-size: var(--od-font-size-xs);
+        font-weight: var(--od-font-weight-semibold);
+        border-radius: var(--od-radius-pill);
+        background: var(--od-bg-muted);
+        color: var(--od-text-muted);
+        text-transform: uppercase;
+        letter-spacing: var(--od-tracking-wide);
+
+        &.od-pill-primary { background: var(--od-color-primary-soft); color: var(--od-color-primary-strong); }
+        &.od-pill-success { background: var(--od-color-success-soft); color: var(--od-color-success); }
+        &.od-pill-warning { background: var(--od-color-warning-soft); color: var(--od-color-warning); }
+        &.od-pill-danger  { background: var(--od-color-danger-soft);  color: var(--od-color-danger); }
+        &.od-pill-info    { background: var(--od-color-info-soft);    color: var(--od-color-info); }
+    }
+
+    // Metric value (numero grande estilo dashboard)
+    .od-metric {
+        font-size: var(--od-font-size-3xl);
+        font-weight: var(--od-font-weight-black);
+        color: var(--od-text-strong);
+        font-feature-settings: "tnum";
+        line-height: var(--od-line-height-tight);
+        letter-spacing: var(--od-tracking-tight);
+    }
+
+    .od-metric-label {
+        font-size: var(--od-font-size-xs);
+        font-weight: var(--od-font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: var(--od-tracking-caps);
+        color: var(--od-text-muted);
+    }
+}

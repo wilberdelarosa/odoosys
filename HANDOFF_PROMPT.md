@@ -16,7 +16,9 @@ Continua este proyecto desde `C:\Users\wilbe\Downloads\PRUEBA DGI` con enfoque d
   - persistencia JSON con escritura atomica y backup `.bak`.
   - CORS restringido a origen local/configurado.
   - `multer` limitado a 10 MB.
-  - launcher local en `desktop-node-local` para correr la app sin Docker/Odoo/Postgres.
+- launcher local en `desktop-node-local` para correr la app sin Docker/Odoo/Postgres.
+- empaquetado desktop real en `desktop-electron` con Electron + electron-builder.
+- build probado de `win-unpacked`, `portable` y `Setup.exe` NSIS.
 
 ## Archivos clave tocados
 
@@ -35,6 +37,11 @@ Continua este proyecto desde `C:\Users\wilbe\Downloads\PRUEBA DGI` con enfoque d
 - `desktop-node-local/test-dgii-node-desktop.ps1`
 - `desktop-node-local/install-shortcut.ps1`
 - `desktop-node-local/README.md`
+- `desktop-electron/package.json`
+- `desktop-electron/main.mjs`
+- `desktop-electron/preload.mjs`
+- `desktop-electron/scripts/prepare-service.mjs`
+- `desktop-electron/README.md`
 
 ## Pruebas que ya pasan
 
@@ -53,15 +60,27 @@ Ejecutar desde `desktop-node-local`:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\test-dgii-node-desktop.ps1 -DataRoot "C:\Users\wilbe\Downloads\PRUEBA DGI\.desktop-node-test"
 ```
 
+Ejecutar desde `desktop-electron`:
+
+```powershell
+npm.cmd install
+npm.cmd run test:desktop
+npm.cmd run dist:dir
+npm.cmd run dist:win
+```
+
 Resultados verificados antes del handoff:
 
 - `DockerRequired=False`
 - `OdooRequired=False`
 - `PostgresRequired=False`
 - backend Node en torno a `76-83 MB` RSS
+- modo Electron embebido en torno a `118-119 MB RSS` del proceso browser y `~121 MB` working set del proceso principal en prueba
 - factura emitida y cobrada correctamente
 - contabilidad balanceada
 - inventario descontado al facturar
+- `win-unpacked` probado con `--test-mode`
+- instalador NSIS probado con instalacion silenciosa en carpeta local y ejecucion correcta del `.exe` instalado
 
 ## Lo que falta realmente
 
@@ -76,6 +95,7 @@ No declares esto como reemplazo completo de Odoo todavia. Faltan piezas operativ
 7. Correccion de textos con mojibake en la UI.
 8. Endpoints destructivos demo como `/api/presets/load` todavia necesitan proteccion o separacion por modo demo.
 9. HTTPS publico y certificado real para DGII real; localhost solo cubre pruebas locales.
+10. Afinar icono, firma y metadata del instalador Electron para distribucion formal.
 
 ## Prioridad recomendada
 
