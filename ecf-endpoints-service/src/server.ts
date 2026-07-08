@@ -1,7 +1,9 @@
 import 'dotenv/config';
 
+import crypto from 'node:crypto';
 import express, { Request } from 'express';
 import forge from 'node-forge';
+import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -17,11 +19,13 @@ import {
   AppData,
   buildCommercialApprovalXml,
   buildEcfXml,
+  changeLocalUserPassword,
   createFiscalSequence,
   createDefaultData,
   createId,
   createInvoice,
   createSaleOrder,
+  authenticateLocalUser,
   Customer,
   confirmSaleOrder,
   getAccountingSummary,
@@ -35,10 +39,13 @@ import {
   Invoice,
   issueInvoice,
   issueInvoiceWithEncf,
+  LocalUser,
   Product,
   recordInventoryMovement,
   recordPayment,
+  sanitizeLocalUser,
   updateFiscalSequence,
+  UserRole,
   validateCompanyReadiness,
 } from './lib/facturador.js';
 
@@ -79,6 +86,7 @@ const incomingRoot = path.resolve(storageRoot, 'incoming');
 const outgoingRoot = path.resolve(storageRoot, 'outgoing');
 const backupRoot = path.resolve(storageRoot, 'backups');
 const dataFile = path.resolve(storageRoot, 'facturador-data.json');
+const authSecretFile = path.resolve(storageRoot, 'local-auth-secret.txt');
 const publicRoot = path.resolve(projectRoot, 'public');
 
 const config = {
@@ -96,6 +104,8 @@ const config = {
   demoCertPath:
     process.env.DEMO_CERT_PATH || path.resolve(storageRoot, 'demo-certificate.p12'),
   demoCertPassword: process.env.DEMO_CERT_PASSWORD || 'demo123',
+  authEnabled: (process.env.AUTH_ENABLED || 'true') === 'true',
+  authTokenHours: Number(process.env.AUTH_TOKEN_HOURS || '12'),
 };
 
 const endpointPaths = {
@@ -112,6 +122,8 @@ async function bootstrap() {
   await ensureDirectory(backupRoot);
   configureAudit(storageRoot);
   const appData = await loadAppData();
+  latestAppDataSnapshot = appData;
+  const authSecret = await loadOrCreateAuthSecret();
 
   const certificate = await loadCertificate();
   const customAuthentication = new CustomAuthentication(certificate);
@@ -127,10 +139,46 @@ async function bootstrap() {
       version: config.softwareVersion,
       buyerRnc: config.buyerRnc,
       publicBaseUrl: config.publicBaseUrl,
+      authEnabled: config.authEnabled,
     });
   });
 
-  app.get('/api/runtime/status', (_req, res) => {
+  app.post('/api/auth/login', async (req, res, next) => {
+    try {
+      const user = authenticateLocalUser(appData, req.body || {});
+      await saveAppData(appData);
+      res.json({
+        ok: true,
+        token: signLocalSession(authSecret, user),
+        user: sanitizeLocalUser(user),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/auth/me', requireAuth('visor'), (req, res) => {
+    res.json({
+      ok: true,
+      user: getRequestUser(req),
+    });
+  });
+
+  app.post('/api/auth/change-password', requireAuth('visor'), async (req, res, next) => {
+    try {
+      const requestUser = getRequestUser(req);
+      const user = changeLocalUserPassword(appData, requestUser.id, req.body || {});
+      await saveAppData(appData);
+      res.json({
+        ok: true,
+        user: sanitizeLocalUser(user),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/runtime/status', requireAuth('admin'), (_req, res) => {
     const memory = process.memoryUsage();
     res.json({
       ok: true,
@@ -158,11 +206,11 @@ async function bootstrap() {
     });
   });
 
-  app.get('/software-config', (_req, res) => {
+  app.get('/software-config', requireAuth('admin'), (_req, res) => {
     res.json(buildSoftwareConfig());
   });
 
-  app.get('/api/audit', (req, res) => {
+  app.get('/api/audit', requireAuth('admin'), (req, res) => {
     const limit = Number(req.query.limit || '100');
     const event = typeof req.query.event === 'string' ? req.query.event : undefined;
     res.json({
@@ -174,7 +222,7 @@ async function bootstrap() {
     });
   });
 
-  app.get('/api/certificate/status', (_req, res) => {
+  app.get('/api/certificate/status', requireAuth('admin'), (_req, res) => {
     const configuredPath = config.certPath || config.demoCertPath;
     const usingDemoCertificate = !config.certPath || config.generateDemoCert;
 
@@ -210,7 +258,7 @@ async function bootstrap() {
     });
   });
 
-  app.get('/api/testlab/required-files', (_req, res) => {
+  app.get('/api/testlab/required-files', requireAuth('admin'), (_req, res) => {
     res.json({
       ok: true,
       files: [
@@ -244,7 +292,7 @@ async function bootstrap() {
     res.sendFile(path.resolve(publicRoot, 'index.html'));
   });
 
-  app.get('/api/dashboard', (_req, res) => {
+  app.get('/api/dashboard', requireAuth('visor'), (_req, res) => {
     const totals = appData.invoices.reduce(
       (acc, invoice) => {
         acc.invoices += 1;
@@ -275,7 +323,7 @@ async function bootstrap() {
     });
   });
 
-  app.post('/api/presets/load', async (req, res, next) => {
+  app.post('/api/presets/load', requireAuth('admin'), async (req, res, next) => {
     try {
       const presetKey = String(req.body?.preset || 'default');
       
@@ -681,7 +729,7 @@ async function bootstrap() {
     }
   });
 
-  app.put('/api/company', async (req, res, next) => {
+  app.put('/api/company', requireAuth('admin'), async (req, res, next) => {
     try {
       Object.assign(appData.company, req.body || {});
       await saveAppData(appData);
@@ -691,14 +739,14 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/fiscal-sequences', (_req, res) => {
+  app.get('/api/fiscal-sequences', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       fiscalSequences: appData.fiscalSequences,
     });
   });
 
-  app.post('/api/fiscal-sequences', async (req, res, next) => {
+  app.post('/api/fiscal-sequences', requireAuth('admin'), async (req, res, next) => {
     try {
       const sequence = createFiscalSequence(appData, req.body || {});
       await saveAppData(appData);
@@ -708,9 +756,9 @@ async function bootstrap() {
     }
   });
 
-  app.put('/api/fiscal-sequences/:id', async (req, res, next) => {
+  app.put('/api/fiscal-sequences/:id', requireAuth('admin'), async (req, res, next) => {
     try {
-      const sequence = updateFiscalSequence(appData, req.params.id, req.body || {});
+      const sequence = updateFiscalSequence(appData, String(req.params.id), req.body || {});
       await saveAppData(appData);
       res.json(sequence);
     } catch (error) {
@@ -718,14 +766,14 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/customers', (_req, res) => {
+  app.get('/api/customers', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       customers: appData.customers,
     });
   });
 
-  app.post('/api/customers', async (req, res, next) => {
+  app.post('/api/customers', requireAuth('operador'), async (req, res, next) => {
     try {
       validateCustomerPayload(req.body || {});
       const customer: Customer = {
@@ -743,7 +791,7 @@ async function bootstrap() {
     }
   });
 
-  app.put('/api/customers/:id', async (req, res, next) => {
+  app.put('/api/customers/:id', requireAuth('operador'), async (req, res, next) => {
     try {
       const customer = appData.customers.find((item) => item.id === req.params.id);
       if (!customer) {
@@ -761,14 +809,14 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/products', (_req, res) => {
+  app.get('/api/products', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       products: appData.products,
     });
   });
 
-  app.post('/api/products', async (req, res, next) => {
+  app.post('/api/products', requireAuth('operador'), async (req, res, next) => {
     try {
       validateProductPayload(req.body || {});
       const product: Product = {
@@ -790,7 +838,7 @@ async function bootstrap() {
     }
   });
 
-  app.put('/api/products/:id', async (req, res, next) => {
+  app.put('/api/products/:id', requireAuth('operador'), async (req, res, next) => {
     try {
       const product = appData.products.find((item) => item.id === req.params.id);
       if (!product) {
@@ -814,7 +862,7 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/inventory', (_req, res) => {
+  app.get('/api/inventory', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       inventory: getInventorySummary(appData),
@@ -822,7 +870,7 @@ async function bootstrap() {
     });
   });
 
-  app.post('/api/inventory/movements', async (req, res, next) => {
+  app.post('/api/inventory/movements', requireAuth('operador'), async (req, res, next) => {
     try {
       const movement = recordInventoryMovement(appData, req.body || {});
       await saveAppData(appData);
@@ -848,7 +896,7 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/sale-orders', (_req, res) => {
+  app.get('/api/sale-orders', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       saleOrders: appData.saleOrders.map((saleOrder) =>
@@ -857,7 +905,7 @@ async function bootstrap() {
     });
   });
 
-  app.post('/api/sale-orders', async (req, res, next) => {
+  app.post('/api/sale-orders', requireAuth('operador'), async (req, res, next) => {
     try {
       const saleOrder = createSaleOrder(appData, req.body || {});
       await saveAppData(appData);
@@ -867,9 +915,9 @@ async function bootstrap() {
     }
   });
 
-  app.post('/api/sale-orders/:id/confirm', async (req, res, next) => {
+  app.post('/api/sale-orders/:id/confirm', requireAuth('operador'), async (req, res, next) => {
     try {
-      const saleOrder = confirmSaleOrder(appData, req.params.id);
+      const saleOrder = confirmSaleOrder(appData, String(req.params.id));
       await saveAppData(appData);
       res.json(enrichSaleOrder(appData, saleOrder));
     } catch (error) {
@@ -877,11 +925,11 @@ async function bootstrap() {
     }
   });
 
-  app.post('/api/sale-orders/:id/invoice', async (req, res, next) => {
+  app.post('/api/sale-orders/:id/invoice', requireAuth('operador'), async (req, res, next) => {
     try {
       const invoice = invoiceSaleOrder(
         appData,
-        req.params.id,
+        String(req.params.id),
         String(req.body?.documentType || 'E31')
       );
       await saveAppData(appData);
@@ -891,35 +939,35 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/accounting/summary', (_req, res) => {
+  app.get('/api/accounting/summary', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       accounting: getAccountingSummary(appData),
     });
   });
 
-  app.get('/api/reports/summary', (_req, res) => {
+  app.get('/api/reports/summary', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       report: buildReportSummary(appData),
     });
   });
 
-  app.get('/api/invoices', (_req, res) => {
+  app.get('/api/invoices', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       invoices: appData.invoices.map((invoice) => enrichInvoice(appData, invoice)),
     });
   });
 
-  app.get('/api/payments', (_req, res) => {
+  app.get('/api/payments', requireAuth('visor'), (_req, res) => {
     res.json({
       ok: true,
       payments: appData.payments,
     });
   });
 
-  app.post('/api/invoices', async (req, res, next) => {
+  app.post('/api/invoices', requireAuth('operador'), async (req, res, next) => {
     try {
       const invoice = createInvoice(appData, req.body);
       await saveAppData(appData);
@@ -929,18 +977,18 @@ async function bootstrap() {
     }
   });
 
-  app.get('/api/invoices/:id', (req, res, next) => {
+  app.get('/api/invoices/:id', requireAuth('visor'), (req, res, next) => {
     try {
-      const invoice = findInvoice(appData, req.params.id);
+      const invoice = findInvoice(appData, String(req.params.id));
       res.json(enrichInvoice(appData, invoice));
     } catch (error) {
       next(error);
     }
   });
 
-  app.post('/api/invoices/:id/issue-ecf', async (req, res, next) => {
+  app.post('/api/invoices/:id/issue-ecf', requireAuth('operador'), async (req, res, next) => {
     try {
-      const invoice = issueInvoice(appData, req.params.id);
+      const invoice = issueInvoice(appData, String(req.params.id));
       const ecfXml = buildEcfXml(appData, invoice);
       const signedEcfXml = signature.signXml(ecfXml, 'ECF');
       const receiver = getInvoiceCustomer(appData, invoice);
@@ -982,10 +1030,10 @@ async function bootstrap() {
     }
   });
 
-  app.post('/api/invoices/:id/payments', async (req, res, next) => {
+  app.post('/api/invoices/:id/payments', requireAuth('operador'), async (req, res, next) => {
     try {
-      const payment = recordPayment(appData, req.params.id, req.body || {});
-      const invoice = findInvoice(appData, req.params.id);
+      const payment = recordPayment(appData, String(req.params.id), req.body || {});
+      const invoice = findInvoice(appData, String(req.params.id));
       await saveAppData(appData);
 
       recordAudit({
@@ -1013,7 +1061,7 @@ async function bootstrap() {
     }
   });
 
-  app.post('/api/odoo/invoices', async (req, res, next) => {
+  app.post('/api/odoo/invoices', requireAuth('admin'), async (req, res, next) => {
     try {
       const payload = req.body || {};
       const customer = upsertCustomerFromExternal(appData, payload.customer || {});
@@ -1076,7 +1124,7 @@ async function bootstrap() {
     }
   });
 
-  app.post('/api/precertification/run', async (_req, res, next) => {
+  app.post('/api/precertification/run', requireAuth('admin'), async (_req, res, next) => {
     try {
       const results = await runPrecertificationTests({
         appData,
@@ -1480,10 +1528,19 @@ async function loadAppData(): Promise<AppData> {
     inventoryMovements: data.inventoryMovements || [],
     saleOrders: data.saleOrders || [],
     journalEntries: data.journalEntries || [],
+    users:
+      data.users && data.users.length
+        ? data.users.map((user) => ({
+            ...user,
+            mustChangePassword: user.mustChangePassword ?? false,
+            active: user.active ?? true,
+          }))
+        : defaults.users,
   };
 }
 
 async function saveAppData(data: AppData) {
+  latestAppDataSnapshot = data;
   await ensureDirectory(path.dirname(dataFile));
   await ensureDirectory(backupRoot);
 
@@ -1597,6 +1654,130 @@ function buildReportSummary(data: AppData) {
       balanced: accounting.balanced,
     },
   };
+}
+
+function requireAuth(requiredRole: UserRole) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!config.authEnabled) {
+      return next();
+    }
+
+    try {
+      const token = extractBearerToken(req);
+      if (!token) {
+        return res.status(401).json({ error: 'Sesion requerida' });
+      }
+
+      const claims = jwt.verify(token, getAuthVerificationSecret()) as {
+        sub: string;
+        role: UserRole;
+        username: string;
+      };
+      const user = getActiveUserById(claims.sub);
+      if (!user) {
+        return res.status(401).json({ error: 'Sesion invalida' });
+      }
+
+      if (!hasRequiredRole(user.role, requiredRole)) {
+        return res.status(403).json({ error: 'Permiso insuficiente' });
+      }
+
+      (req as express.Request & { authUser?: ReturnType<typeof sanitizeLocalUser> }).authUser =
+        sanitizeLocalUser(user);
+      next();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Sesion invalida';
+      return res.status(401).json({ error: message });
+    }
+  };
+}
+
+function extractBearerToken(req: express.Request) {
+  const raw = req.headers.authorization;
+  if (!raw || !raw.startsWith('Bearer ')) {
+    return '';
+  }
+
+  return raw.slice('Bearer '.length).trim();
+}
+
+function hasRequiredRole(currentRole: UserRole, requiredRole: UserRole) {
+  const hierarchy: Record<UserRole, number> = {
+    visor: 1,
+    operador: 2,
+    admin: 3,
+  };
+
+  return hierarchy[currentRole] >= hierarchy[requiredRole];
+}
+
+function getRequestUser(req: express.Request) {
+  const authUser = (req as express.Request & {
+    authUser?: ReturnType<typeof sanitizeLocalUser>;
+  }).authUser;
+
+  if (!authUser) {
+    throw new Error('Sesion no disponible');
+  }
+
+  return authUser;
+}
+
+function getActiveUserById(userId: string) {
+  const data = cachedAppData();
+  return data.users.find((user) => user.id === userId && user.active);
+}
+
+function signLocalSession(secret: string, user: LocalUser) {
+  return jwt.sign(
+    {
+      sub: user.id,
+      role: user.role,
+      username: user.username,
+    },
+    secret,
+    {
+      algorithm: 'HS256',
+      expiresIn: `${config.authTokenHours}h`,
+    }
+  );
+}
+
+let resolvedAuthSecret = '';
+
+function getAuthVerificationSecret() {
+  if (!resolvedAuthSecret) {
+    throw new Error('El secreto de autenticacion no fue inicializado');
+  }
+
+  return resolvedAuthSecret;
+}
+
+async function loadOrCreateAuthSecret() {
+  if (resolvedAuthSecret) {
+    return resolvedAuthSecret;
+  }
+
+  if (fs.existsSync(authSecretFile)) {
+    resolvedAuthSecret = (await fs.promises.readFile(authSecretFile, 'utf8')).trim();
+    if (resolvedAuthSecret) {
+      return resolvedAuthSecret;
+    }
+  }
+
+  resolvedAuthSecret = crypto.randomBytes(32).toString('hex');
+  await fs.promises.writeFile(authSecretFile, resolvedAuthSecret, 'utf8');
+  return resolvedAuthSecret;
+}
+
+let latestAppDataSnapshot: AppData | null = null;
+
+function cachedAppData() {
+  if (!latestAppDataSnapshot) {
+    throw new Error('Datos de aplicacion no inicializados');
+  }
+
+  return latestAppDataSnapshot;
 }
 
 function validateCustomerPayload(payload: Record<string, unknown>) {

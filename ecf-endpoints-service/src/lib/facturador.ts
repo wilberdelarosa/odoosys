@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 export interface CompanyProfile {
   rnc: string;
   razonSocial: string;
@@ -25,6 +27,20 @@ export interface FiscalSequence {
 
 export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'cheque' | 'otro';
 export type PaymentStatus = 'pendiente' | 'parcial' | 'pagada';
+export type UserRole = 'admin' | 'operador' | 'visor';
+
+export interface LocalUser {
+  id: string;
+  username: string;
+  displayName: string;
+  role: UserRole;
+  passwordSalt: string;
+  passwordHash: string;
+  mustChangePassword: boolean;
+  active: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
 
 export interface Payment {
   id: string;
@@ -136,6 +152,7 @@ export interface AppData {
   inventoryMovements: InventoryMovement[];
   saleOrders: SaleOrder[];
   journalEntries: JournalEntry[];
+  users: LocalUser[];
 }
 
 export interface CertificationTestResult {
@@ -207,6 +224,7 @@ export function createDefaultData(): AppData {
     inventoryMovements: [],
     saleOrders: [],
     journalEntries: [],
+    users: [createDefaultAdminUser()],
   };
 }
 
@@ -529,6 +547,62 @@ export function getAccountingSummary(data: AppData) {
       ...balance,
     })),
     balanced: data.journalEntries.every((entry) => isBalanced(entry.lines)),
+  };
+}
+
+export function authenticateLocalUser(
+  data: AppData,
+  payload: { username?: string; password?: string }
+) {
+  const username = String(payload.username || '').trim().toLowerCase();
+  const password = String(payload.password || '');
+  const user = data.users.find(
+    (candidate) => candidate.active && candidate.username.toLowerCase() === username
+  );
+
+  if (!user || !verifyPassword(password, user.passwordSalt, user.passwordHash)) {
+    throw new Error('Credenciales invalidas');
+  }
+
+  user.lastLoginAt = new Date().toISOString();
+  return user;
+}
+
+export function changeLocalUserPassword(
+  data: AppData,
+  userId: string,
+  payload: { currentPassword?: string; newPassword?: string }
+) {
+  const user = data.users.find((candidate) => candidate.id === userId);
+  if (!user || !user.active) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  const currentPassword = String(payload.currentPassword || '');
+  const newPassword = String(payload.newPassword || '');
+
+  if (!verifyPassword(currentPassword, user.passwordSalt, user.passwordHash)) {
+    throw new Error('La contrasena actual no es valida');
+  }
+
+  validatePasswordStrength(newPassword);
+  const next = createPasswordHash(newPassword);
+  user.passwordSalt = next.salt;
+  user.passwordHash = next.hash;
+  user.mustChangePassword = false;
+  return user;
+}
+
+export function sanitizeLocalUser(user: LocalUser) {
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword,
+    active: user.active,
+    createdAt: user.createdAt,
+    lastLoginAt: user.lastLoginAt,
   };
 }
 
@@ -1010,6 +1084,41 @@ function roundMoney(value: number) {
 
 function roundQuantity(value: number) {
   return Math.round((value + Number.EPSILON) * 10000) / 10000;
+}
+
+function createDefaultAdminUser(): LocalUser {
+  const password = process.env.LOCAL_ADMIN_PASSWORD || 'admin123';
+  const hashed = createPasswordHash(password);
+
+  return {
+    id: 'usuario-admin-local',
+    username: process.env.LOCAL_ADMIN_USERNAME || 'admin',
+    displayName: 'Administrador Local',
+    role: 'admin',
+    passwordSalt: hashed.salt,
+    passwordHash: hashed.hash,
+    mustChangePassword: true,
+    active: true,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function createPasswordHash(password: string) {
+  validatePasswordStrength(password);
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return { salt, hash };
+}
+
+function verifyPassword(password: string, salt: string, hash: string) {
+  const candidate = crypto.scryptSync(String(password || ''), salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(candidate, 'hex'), Buffer.from(hash, 'hex'));
+}
+
+function validatePasswordStrength(password: string) {
+  if (String(password || '').length < 8) {
+    throw new Error('La contrasena debe tener al menos 8 caracteres');
+  }
 }
 
 function formatMoney(value: number) {

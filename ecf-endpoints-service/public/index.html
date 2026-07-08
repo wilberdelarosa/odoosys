@@ -35,6 +35,36 @@
       </div>
     </div>
 
+    <div class="auth-overlay" id="authOverlay">
+      <div class="auth-card">
+        <div class="auth-header">
+          <span class="eyebrow">Acceso Local</span>
+          <h2 id="authTitle">Iniciar Sesion</h2>
+          <p id="authMessage">Autentica la consola local antes de operar el facturador.</p>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <label>Usuario
+            <input id="loginUsername" name="username" autocomplete="username" value="admin" />
+          </label>
+          <label>Contrasena
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" value="admin123" />
+          </label>
+          <button class="btn btn-primary" type="submit">Entrar</button>
+        </form>
+
+        <form id="passwordForm" class="auth-form hidden">
+          <label>Contrasena Actual
+            <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" />
+          </label>
+          <label>Nueva Contrasena
+            <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" />
+          </label>
+          <button class="btn btn-primary" type="submit">Actualizar Clave</button>
+        </form>
+      </div>
+    </div>
+
     <main class="shell">
       <!-- High-tech Active Header -->
       <header class="hero">
@@ -50,6 +80,10 @@
           <div class="status-info">
             <strong id="serviceStatus">Sincronizando bus...</strong>
             <small id="serviceUrl">Espere un momento...</small>
+          </div>
+          <div class="auth-session">
+            <span id="currentUserLabel" class="session-user">Sesion no iniciada</span>
+            <button class="btn btn-ghost btn-compact" id="logoutButton">Salir</button>
           </div>
         </div>
       </header>
